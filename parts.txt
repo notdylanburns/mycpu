@@ -1,0 +1,3 @@
+lines:
+    counter:
+        inc/dec line    # 0 for dec, 1 for inc

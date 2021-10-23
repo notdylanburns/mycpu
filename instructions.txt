@@ -1,0 +1,30 @@
+addr = 2 byte address
+inst = 2 byte Instruction
+r = nibble representing register number
+n = arbitrary nibble
+
+PR = Page Register << 16
+
+address modes:
+0 immediate - use address specified (offset by pr)    (imm) jmp addr -> jmp PR + addr
+1 register1 - use register value as Addresses         (rr1) jmp %r0 -> jmp PR + %r0
+2 regsiter2 - use 2 regs (r1 << 16 + r2)              (rr2) jmp %(r0,r1) -> jmp (%r0 << 16) + %r1
+3 register1_off - use register1 + immediate offset    (r1o) jmp %r0,addr -> jmp PR + %r0 + addr
+4 register2_off - use register2 + immediate offset    (r2o) jmp %(r0,r1),addr -> jmp (%r0 << 16) + %r1 + addr
+5 register1_roff - use register1 + register offset    (r1r) jmp %r0,%r1 -> jmp PR + %r0 + %r1
+6 register2_roff - use register2 + register offset    (r2r) jmp %(r0,r1),%r2 -> jmp (%r0 << 16) + %r1 + %r2 
+7 indirect - use address specified by address         (ind) jmp [addr] -> jmp PR + [addr]
+8 indirectr1 - use address specified by register      (ir1) jmp [%r0] -> jmp PR + [%r0]
+9 indirectr2 - use address specified by register2     (ir2) jmp [%(r0,r1)] -> jmp [(%r0 << 16) + %r1]
+A indirectoff1 - use address specified by register    (io1) jmp [%r0,addr] -> jmp PR + [%r0 + addr]
+B indirectoff2 - use address specified by register    (io2) jmp [%(r0,r1),addr] -> jmp PR + [jmp (%r0 << 16) + %r1 + addr]
+C indirectroff1 - use address specified by register   (i1r)
+D indirectroff2 - use address specified by register   (i2r)
+E 
+F 
+
+JMP:
+(imm)0000 addr
+(rr1)001r
+(rr2)01rr
+(r1o)002

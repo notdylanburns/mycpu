@@ -1,0 +1,172 @@
+memory:
+
+pr - Page Register
+Addresses are calculated (pr << 16) | address
+this allows 32 bits of memory to be accessed.
+
+Memory map:
+
+0x00000000 - 0xffffffff: Stack
+0x00010000 - 0xffffffff: BIOS
+
+OPC = 00 00 - 1 byte instruction id, 1 byte info
+info = 0 0 - 1 nibble addrmode, 1 nibble register * 2
+
+FLAG REGISTER:
+
+76543210
+C------U
+
+C: Carry
+U: User flag, (used with "ju" - jump on user flag set). ju clears the user flag after jumping. No internal process of the CPU can mody the User Flag, and it can only be modified via the "suf" and "cuf" 
+
+COUNTERS:
+00 - OUT
+01 - LOAD
+10 - INC
+11 - DEC
+
+ALU:
+0000 - ADD
+0001 - SUB
+0010 - AND
+0011 - OR
+0100 - XOR
+0101 - NOT (A)
+0110 - LEFT SHIFT (A)
+0111 - RIGHT SHIFT (A)
+
+ADDRESSING:
+registers can be used for both high and low halves of the address
+pr can only be top half
+pc can only be bottom half
+sp can only be bottom half
+
++---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+|MCR|   |   |   |   |   |   |   |   |   |   |   |IRE|PRE|SPE|PCE|
++---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+|CI1|CI0|RS3|RS2|RS1|RS0|GEN|AI3|AI2|AI1|AI0|AEN|ARW|LRW|SRW|HLT|
++---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+
+/*
+    00 00 0A 01
+    Ouput Addr: HLT=1,SYSRW=0,CTRI1=0,CTRI2=0,PCENA=1,PRENA=1
+    00 00 10 31
+    Load Inst: HLT=1,SYSRW=1,IRENA=1
+    00 00 20 31
+    Load Arg1: HLT=1,SYSRW=1,ARENA=1
+*/
+
+Small test program
+
+lod %0 #$aa55 // loads 0xAA55 into register 0
+sto %1 %0     // store register 0 to register 1
+adc %1 #$0021 // add 0x21 to register 1
+
+load byte and store in CIR
+00000000 11010000 00000000 00001101
+00 C0 00 0C
+
+inc PC
+00000000 00011000 00100000 00001001
+00 18 20 09
+
+ld0
+00000000 01010000 00100000 00000101
+00 50 20 05
+
+MCR
+10000000 00000000 00000000 00000000
+80 00 00 00
+
+lod %0: 0000
+    00000000 00101000 00000000 00000001
+    Load Inst: HLT=1,SYSRW=0,LCLRW=1,CTRI1=0,CTRI2=0,PCENA=1,PRENA=1
+    00000000 00000000 00000000 00000000
+    Load Byte: HLT=1,SYSRW=0,LCLRW=1,CTRI1=0,CTRI2=0,PCENA=1,
+
+
+CTRL LINES:
+// CPU halt
+ 0: HLT
+
+// RW FLAGS
+ 1: SYSRW // External RW
+ 2: REGRW // CIR, REGISTERS
+ 3: ADDRW // PR, PC
+ 4: ALURW // FLAGS, A, B
+
+// ALU enable
+ 5: ALUEN
+
+ 6: ALUF // ALU Flag register
+ 7: ALUA // ALU A register
+ 8: ALUB // ALU B register
+
+// ALU instructions
+ 9: ALUI0
+10: ALUI1
+11: ALUI2
+12: ALUI3
+
+// general purpose register select bits
+13: GPREN
+14: GPRS0
+15: GPRS1
+16: GPRS2
+17: GPRS3
+
+// counter bits
+18: CTRI0
+19: CTRI1
+20: PCENA  // program counter enable
+21: SPENA  // stack pointer enable 
+
+22: PRENA  // Page register enable
+23: IRENA  // Instruction register enable
+
+// addressing stuff
+24: DHIGHA // Output data to HI addr register
+25: DLOWA  // Output data to LO addr register
+
+26: SAHIGH // Set hi half of address
+27: SALOW  // set lo half of address
+...
+
+31: MCR    // Microcode counter reset
+
+Read First Word of Page (must be microcode 00000): 
+// Inc PC, Set Addr = PR + 0000, Load Word into IR
+00001100 11011000 00000000 00001100
+0cd8 000c
+
+Inc PC and Load Word from Addr into CIR:
+01001100 11010000 00000000 00001100
+0cd0 000c
+
+Inc PC and Load Word from Addr into %r:
+00000100 000110rr rr100000 00001100
+0418 200c + (r << 14)
+
+Inc PC
+
+RESET button will allow the Vcc of the CPU to flow to ground
+
+P flag (parity) odd or even
+S flag (sign) positive or negative
+
+test a = tests a and sets all corresponding flags
+
+D -> %r: 00402r80
+D -> IR: 00400044
+PC++: 0000000a 
+
+NOP:
+00400044
+0000000a
+80000000
+
+LD %r D:
+00400044
+00402r8a
+80000000
