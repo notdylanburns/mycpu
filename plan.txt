@@ -157,10 +157,6 @@ S flag (sign) positive or negative
 
 test a = tests a and sets all corresponding flags
 
-D -> %r: 00402r80
-D -> IR: 00400044
-PC++: 0000000a 
-
 NOP:
 00400044
 0000000a
@@ -169,4 +165,4 @@ NOP:
 LD %r D:
 00400044
 00402r8a
-80000000
+8000000a

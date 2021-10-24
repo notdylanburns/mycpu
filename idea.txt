@@ -1,0 +1,16 @@
+#D - data bus
+#A - address bus
+
+0000 0000 0100 0000 0010 rrrr 1000 0000
+00402r80
+
+#List of microcode actions:
+%r -> [SP]: 42401r80
+[SP] -> %r: 02402r80
+D -> IR:    00400044
+[A] -> %r:  00402r80
+PC++:       0000000a 
+SP++:       00000022
+SP--:       00000020
+
+# All operations start with 00400044 and end with 8000000a
