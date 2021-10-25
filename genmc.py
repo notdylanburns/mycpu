@@ -17,7 +17,7 @@ def main(f):
 
         if ":" in l:
             op = l.split(":")[0]
-            mc = []
+            mc = ["00400044"]
             while True:
                 try:
                     nl = next(gen)

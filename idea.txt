@@ -1,16 +1,29 @@
-#D - data bus
-#A - address bus
+D  - data bus
+A  - PR | PC
+SP - 0xffff | SP
 
-0000 0000 0100 0000 0010 rrrr 1000 0000
-00402r80
+
+mrnn nnmm mmaa aaaa aarr rrrr risp pcch
+c/// //ss seol liii ielo ssss erpr clul
+raaa aa21 0neb a321 0nee 3210 neee eddt
+
+0--- --00 0000 1000 0001 rrrr 1000 0101
+
+0048 0000
 
 #List of microcode actions:
-%r -> [SP]: 42401r80
-[SP] -> %r: 02402r80
-D -> IR:    00400044
-[A] -> %r:  00402r80
-PC++:       0000000a 
-SP++:       00000022
-SP--:       00000020
+%r -> [SP]:     42401r80
+[SP] -> %r:     02402r80
+D -> IR:        00400044
+[A] -> %r:      00402r80
+PC++:           0000000a 
+SP++:           00000022
+SP--:           00000020
+%r -> ALUA:     00085r80
+%r -> ALUB:     00105r8a
+[A] -> ALUA:    00484000
+[A] -> ALUB:    00504000
+ALUA + ALUB:    00204000
+D -> %r:        00002r80
 
 # All operations start with 00400044 and end with 8000000a
