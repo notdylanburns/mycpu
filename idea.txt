@@ -1,29 +1,86 @@
 D  - data bus
 A  - PR | PC
 SP - 0xffff | SP
+AA - alu a register
+AB - alu b register
 
+MMU:
+    000 - PR | PC
+    001 -  D | PC
+    010 - PR | D
+    011 -  D | D
+    100 - SP
+    101 - SP, PR -> D
+    110 - SP, PC -> D
+    111 - 0xff00 + IRQ
 
-mrnn nnmm mmaa aaaa aarr rrrr risp pcch
-c/// //ss seol liii ielo ssss erpr clul
-raaa aa21 0neb a321 0nee 3210 neee eddt
+key:
+    imm - immediate value 
+    a16 - 16 bit address
+    m16 - 16 bit memory word (represented as *mem_addr, eg *0 is the value stored at mem addr 0000)
 
-0--- --00 0000 1000 0001 rrrr 1000 0101
+conditional jumps can only occur within the current page
 
-0048 0000
+mrff fjmm mmaa aaaa aarr rrrr risp pcch
+c/ss sfss seol liii ielo ssss erpr clul
+rw21 0e21 0neb a321 0nee 3210 neee eddt
+
+00-- --10 0110 0110 11-- ---- ---- ---0
+0266 c000 
 
 #List of microcode actions:
-%r -> [SP]:     42401r80
-[SP] -> %r:     02402r80
+%r -> *SP:      42401r80
+*SP -> %r:      02402r80
+PC -> *SP:      43400000
+*SP -> PC:      0240000c
+PR -> *SP:      42c00000
+*SP -> PR:      02400014
 D -> IR:        00400044
-[A] -> %r:      00402r80
-PC++:           0000000a 
+*A -> %r:       00402r80
+PC++:           0000000a
 SP++:           00000022
 SP--:           00000020
-%r -> ALUA:     00085r80
-%r -> ALUB:     00105r8a
-[A] -> ALUA:    00484000
-[A] -> ALUB:    00504000
-ALUA + ALUB:    00204000
+%r -> AA:       00085r80
+%r -> AB:       00105r80
+*A -> AA:       00484000
+*A -> AB:       00504000
+*A -> PC:       0040000c
+AA + AB:        00204000
 D -> %r:        00002r80
+D -> PC:        0000000c
+IRQ -> PC:      03c0000c
+FLA -> *SP:     42674000
+*SP -> FLA:     0266c000
 
 # All operations start with 00400044 and end with 8000000a
+
+each alu op
+jump inst
+hlt 
+
+assembly language name: [num opcodes]d16
+    eg: 60 => 60d16
+
+
+interrupts:
+    5 cpu pins control interrupts
+    INT pin is the interrupt enable
+    IS0-IS3 are the interrupt select pins, allowing for 16 interrupts
+    The last 16 addresses of the first memory page are the interrupt vector table
+    These are the zero page addresses of each of the interrupt routines 
+
+interrupt sequence:
+
+0x8000 (int)
+    push pc
+    push pr
+
+    0x0000 -> PR
+    0xff00 + interrupt number -> A 
+    D -> pc
+
+... interrupt routine ops ...
+
+0x4000 (rti)
+    pop pr
+    pop pc

@@ -155,6 +155,11 @@ RESET button will allow the Vcc of the CPU to flow to ground
 P flag (parity) odd or even
 S flag (sign) positive or negative
 
+Flags A-D are set by the user through the ALU
+The V Flag can be set by the user through the ALU
+P, S, and Z flags are set automatically after each ALU operation
+D flag is the interrupt disable
+
 test a = tests a and sets all corresponding flags
 
 NOP:
@@ -166,3 +171,22 @@ LD %r D:
 00400044
 00402r8a
 8000000a
+
+addressing modes:
+    register16          0R
+    register,register   1R
+    absolute16,register 2R
+    register,absolute16 3R
+    register,register   4R
+
+    immediate           8II0
+    absolute16          9II0 
+    absolute32          AII0
+
+file "fib.d16" 
+
+    mov %0 24
+
+fib:
+    tst %0
+    jsz 
