@@ -28,6 +28,8 @@ rw21 0e21 0neb a321 0nee 3210 neee eddt
 00-- --10 0110 0110 11-- ---- ---- ---0
 0266 c000 
 
+
+
 #List of microcode actions:
 %r -> *SP:      42401r80
 *SP -> %r:      02402r80
@@ -76,7 +78,7 @@ interrupt sequence:
     push pr
 
     0x0000 -> PR
-    0xff00 + interrupt number -> A 
+    0xfff0 + interrupt number -> A 
     D -> pc
 
 ... interrupt routine ops ...
