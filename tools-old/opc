@@ -1,0 +1,113 @@
+hlt                       0000
+mov
+  %r
+    imm                   001r
+    m16                   011r
+  m16
+    %r                    030r
+    imm                   0310
+  
+psh
+  %r                      002r
+  m16                     012r
+  imm                     
+  fla                     
+pop
+  %r                      003r
+  m16                     013r
+  fla                     
+adc
+  %r
+    imm                   004r
+    m16                   014r
+sub
+  %r
+    imm                   005r
+    m16                   015r
+and
+  %r
+    imm                   006r
+    m16                   016r
+or
+  %r
+    imm                   007r
+    m16                   017r
+xor
+  %r
+    imm                   008r
+    m16                   018r
+not
+  %r                      009r
+    m16                   019r
+inc
+  %r                      00Ar
+  m16                     01Ar
+dec
+  %r                      00Br
+  m16                     01Br
+lsh
+  %r                      00Cr
+  m16                     01Cr
+rsh
+  %r                      00Dr
+  m16                     01Dr
+rol
+  %r                      00Er
+  m16                     01Er
+ror
+  %r                      00Fr
+  m16                     01Fr
+tst
+  %r                      020r
+jmp
+  m16                     0210
+  m32                     0211
+ja
+  m16
+  m32
+jb
+  m16
+  m32
+jc
+  m16
+  m32
+jd
+  m16
+  m32
+js
+  m16
+  m32
+jp
+  m16
+  m32
+jz
+  m16
+  m32
+jv
+  m16
+  m32
+jna
+  m16
+  m32
+jnb
+  m16
+  m32
+jnc
+  m16
+  m32
+jnd
+  m16
+  m32
+jns
+  m16
+  m32
+jnp
+  m16
+  m32
+jnz
+  m16
+  m32
+jnv
+  m16
+  m32
+

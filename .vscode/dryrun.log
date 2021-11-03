@@ -1,0 +1,6 @@
+make all --dry-run --keep-going --print-directory
+make: Entering directory '/home/mk41/mycpu'
+make: Leaving directory '/home/mk41/mycpu'
+ 
+make: *** No rule to make target 'all'.
+ 
