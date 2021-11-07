@@ -1,11 +1,8 @@
-make --dry-run --keep-going --print-directory
+make --dry-run --always-make --keep-going --print-directory
 make: Entering directory '/home/mk41/mycpu/d16-asm'
-gcc -Wall -Werror -I/home/mk41/mycpu/d16-asm/inc -ggdb3 -c /home/mk41/mycpu/d16-asm/src/arg.c -o /home/mk41/mycpu/d16-asm/obj/arg.o 
-gcc -Wall -Werror -I/home/mk41/mycpu/d16-asm/inc -ggdb3 -c /home/mk41/mycpu/d16-asm/src/assemble.c -o /home/mk41/mycpu/d16-asm/obj/assemble.o 
-gcc -Wall -Werror -I/home/mk41/mycpu/d16-asm/inc -ggdb3 -c /home/mk41/mycpu/d16-asm/src/line.c -o /home/mk41/mycpu/d16-asm/obj/line.o 
-gcc -Wall -Werror -I/home/mk41/mycpu/d16-asm/inc -ggdb3 -c /home/mk41/mycpu/d16-asm/src/number.c -o /home/mk41/mycpu/d16-asm/obj/number.o 
-gcc -Wall -Werror -I/home/mk41/mycpu/d16-asm/inc -ggdb3 -c /home/mk41/mycpu/d16-asm/src/op.c -o /home/mk41/mycpu/d16-asm/obj/op.o 
-gcc -llog -lm -o d16a /home/mk41/mycpu/d16-asm/obj/arg.o /home/mk41/mycpu/d16-asm/obj/assemble.o /home/mk41/mycpu/d16-asm/obj/d16a.o /home/mk41/mycpu/d16-asm/obj/line.o /home/mk41/mycpu/d16-asm/obj/number.o /home/mk41/mycpu/d16-asm/obj/op.o
+mkdir /home/mk41/mycpu/d16-asm/obj
+gcc -Wall -Werror -I/home/mk41/mycpu/d16-asm/inc -ggdb3 -c /home/mk41/mycpu/d16-asm/src/matrix.c -o /home/mk41/mycpu/d16-asm/obj/matrix.o 
+gcc -llog -lm -o d16a /home/mk41/mycpu/d16-asm/obj/matrix.o
 rm -rf /home/mk41/mycpu/d16-asm/obj
 make: Leaving directory '/home/mk41/mycpu/d16-asm'
  

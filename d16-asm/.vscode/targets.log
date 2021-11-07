@@ -6,7 +6,7 @@ make all --print-data-base --no-builtin-variables --no-builtin-rules --question
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law.
 
-# Make data base, printed on Sat Nov  6 20:12:31 2021
+# Make data base, printed on Sat Nov  6 21:38:47 2021
 
 # Variables
 
@@ -21,7 +21,7 @@ GTK_RC_FILES = /etc/gtk/gtkrc:/home/mk41/.gtkrc:/home/mk41/.config/gtkrc
 # environment
 SNAP_INSTANCE_KEY = 
 # environment
-VSCODE_IPC_HOOK_EXTHOST = /run/user/1000/vscode-ipc-b4e24472-16d5-4b9e-b31b-5c1075728452.sock
+VSCODE_IPC_HOOK_EXTHOST = /run/user/1000/vscode-ipc-9082e3ec-80ca-46ce-80a2-28f16a6719d9.sock
 # environment
 KONSOLE_DBUS_SERVICE = :1.78
 # makefile (from 'Makefile', line 6)
@@ -38,7 +38,6 @@ WINDOWID = 81788935
 NVM_DIR = /home/mk41/.nvm
 # environment
 LC_ADDRESS = en_GB.UTF-8
- 
 # default
 MAKE_COMMAND := make
 # environment
@@ -108,7 +107,7 @@ VSCODE_PIPE_LOGGING = true
 # environment
 APPLICATION_INSIGHTS_NO_DIAGNOSTIC_CHANNEL = true
 # makefile (from 'Makefile', line 14)
-SRCS := /home/mk41/mycpu/d16-asm/src/arg.c /home/mk41/mycpu/d16-asm/src/assemble.c /home/mk41/mycpu/d16-asm/src/d16a.c /home/mk41/mycpu/d16-asm/src/line.c /home/mk41/mycpu/d16-asm/src/number.c /home/mk41/mycpu/d16-asm/src/op.c
+SRCS := /home/mk41/mycpu/d16-asm/src/matrix.c
 # automatic
 *D = $(patsubst %/,%,$(dir $*))
 # environment
@@ -142,7 +141,7 @@ ZSH = /home/mk41/.oh-my-zsh
 # environment
 VSCODE_VERBOSE_LOGGING = true
 # environment
-VSCODE_PID = 421656
+VSCODE_PID = 429977
 # environment
 XDG_SESSION_TYPE = x11
 # automatic
@@ -164,7 +163,7 @@ BREAKPAD_DUMP_LOCATION = /home/mk41/.config/Code/exthost Crash Reports
 # default
 MAKE_HOST := x86_64-pc-linux-gnu
 # makefile (from 'Makefile', line 15)
-OBJS :=  /home/mk41/mycpu/d16-asm/obj/arg.o  /home/mk41/mycpu/d16-asm/obj/assemble.o  /home/mk41/mycpu/d16-asm/obj/d16a.o  /home/mk41/mycpu/d16-asm/obj/line.o  /home/mk41/mycpu/d16-asm/obj/number.o  /home/mk41/mycpu/d16-asm/obj/op.o 
+OBJS :=  /home/mk41/mycpu/d16-asm/obj/matrix.o 
 # makefile
 SHELL = /bin/sh
 # default
@@ -282,6 +281,7 @@ LC_PAPER = en_GB.UTF-8
 # environment
 XDG_RUNTIME_DIR = /run/user/1000
 # makefile (from 'Makefile', line 11)
+ 
 CFLAGS := -Wall -Werror -I/home/mk41/mycpu/d16-asm/inc -ggdb3
 # environment
 COLORTERM = truecolor
@@ -350,7 +350,7 @@ LC_IDENTIFICATION = en_GB.UTF-8
 # environment
 SNAP_LIBRARY_PATH = /var/lib/snapd/lib/gl:/var/lib/snapd/lib/gl32:/var/lib/snapd/void
 # variable set hash-table stats:
-# Load=169/1024=17%, Rehash=0, Collisions=23/225=10%
+# Load=169/1024=17%, Rehash=0, Collisions=23/223=10%
 
 # Pattern-specific Variable Values
 
@@ -358,11 +358,11 @@ SNAP_LIBRARY_PATH = /var/lib/snapd/lib/gl:/var/lib/snapd/lib/gl32:/var/lib/snapd
 
 # Directories
 
-# /home/mk41/mycpu/d16-asm (device 65024, inode 36571852): 9 files, no impossibilities.
-# /home/mk41/mycpu/d16-asm/src (device 65024, inode 36700490): 8 files, no impossibilities.
-# . (device 65024, inode 36571852): 9 files, no impossibilities.
+# /home/mk41/mycpu/d16-asm (device 65024, inode 36571852): 8 files, no impossibilities.
+# /home/mk41/mycpu/d16-asm/src (device 65024, inode 36700490): 3 files, no impossibilities.
+# . (device 65024, inode 36571852): 8 files, no impossibilities.
 
-# 26 files, no impossibilities in 3 directories.
+# 19 files, no impossibilities in 3 directories.
 
 # Implicit Rules
 
@@ -373,55 +373,20 @@ SNAP_LIBRARY_PATH = /var/lib/snapd/lib/gl:/var/lib/snapd/lib/gl32:/var/lib/snapd
 # 1 implicit rules, 0 (0.0%) terminal.
 # Files
 
-/home/mk41/mycpu/d16-asm/obj/arg.o: /home/mk41/mycpu/d16-asm/src/arg.c /home/mk41/mycpu/d16-asm/obj
-#  Implicit rule search has been done.
-#  Implicit/static pattern stem: 'arg'
-#  Last modified 2021-10-26 23:25:47.159869633
-#  File has been updated.
-#  Needs to be updated (-q is set).
-# automatic
-# @ := /home/mk41/mycpu/d16-asm/obj/arg.o
-# automatic
-# * := arg
-# automatic
-# < := /home/mk41/mycpu/d16-asm/src/arg.c
-# automatic
-# + := /home/mk41/mycpu/d16-asm/src/arg.c /home/mk41/mycpu/d16-asm/obj
-# automatic
-# % := 
-# automatic
-# ^ := /home/mk41/mycpu/d16-asm/src/arg.c /home/mk41/mycpu/d16-asm/obj
-# automatic
-# ? := /home/mk41/mycpu/d16-asm/obj
-# automatic
-# | := 
-# variable set hash-table stats:
-# Load=8/32=25%, Rehash=0, Collisions=2/15=13%
-#  recipe to execute (from 'Makefile', line 25):
-	$(CC) $(CFLAGS) -c $< -o $@ 
-
-# Not a target:
-/home/mk41/mycpu/d16-asm/src/arg.c:
-#  Implicit rule search has been done.
-#  Last modified 2021-10-26 22:57:22.589913613
-#  File has been updated.
-#  Successfully updated.
-
 # Not a target:
 Makefile:
 #  Implicit rule search has been done.
- 
 #  Last modified 2021-10-26 22:27:14.893293562
 #  File has been updated.
 #  Successfully updated.
 
-d16a: /home/mk41/mycpu/d16-asm/obj/arg.o /home/mk41/mycpu/d16-asm/obj/assemble.o /home/mk41/mycpu/d16-asm/obj/d16a.o /home/mk41/mycpu/d16-asm/obj/line.o /home/mk41/mycpu/d16-asm/obj/number.o /home/mk41/mycpu/d16-asm/obj/op.o
+d16a: /home/mk41/mycpu/d16-asm/obj/matrix.o
 #  Implicit rule search has not been done.
-#  Last modified 2021-10-26 22:47:14.436595964
+#  File does not exist.
 #  File has been updated.
 #  Needs to be updated (-q is set).
 # variable set hash-table stats:
-# Load=0/32=0%, Rehash=0, Collisions=0/5=0%
+# Load=0/32=0%, Rehash=0, Collisions=0/3=0%
 #  recipe to execute (from 'Makefile', line 21):
 	$(CC) $(LDFLAGS) -o $(TARGET) $^
 
@@ -431,6 +396,17 @@ clean:
 #  File has not been updated.
 #  recipe to execute (from 'Makefile', line 31):
 	rm -rf $(OBJ_DIR)
+
+/home/mk41/mycpu/d16-asm/obj/matrix.o: /home/mk41/mycpu/d16-asm/src/matrix.c /home/mk41/mycpu/d16-asm/obj
+#  Implicit rule search has been done.
+#  Implicit/static pattern stem: 'matrix'
+#  File does not exist.
+#  File has been updated.
+#  Needs to be updated (-q is set).
+# variable set hash-table stats:
+# Load=0/32=0%, Rehash=0, Collisions=0/3=0%
+#  recipe to execute (from 'Makefile', line 25):
+	$(CC) $(CFLAGS) -c $< -o $@ 
 
 # Not a target:
 .DEFAULT:
@@ -446,7 +422,7 @@ all: build clean
 #  File has been updated.
 #  Needs to be updated (-q is set).
 # variable set hash-table stats:
-# Load=0/32=0%, Rehash=0, Collisions=0/5=0%
+# Load=0/32=0%, Rehash=0, Collisions=0/3=0%
 
 build: d16a
 #  Implicit rule search has been done.
@@ -454,35 +430,42 @@ build: d16a
 #  File has been updated.
 #  Needs to be updated (-q is set).
 # variable set hash-table stats:
-# Load=0/32=0%, Rehash=0, Collisions=0/5=0%
+# Load=0/32=0%, Rehash=0, Collisions=0/3=0%
 
-objects: /home/mk41/mycpu/d16-asm/obj/arg.o /home/mk41/mycpu/d16-asm/obj/assemble.o /home/mk41/mycpu/d16-asm/obj/d16a.o /home/mk41/mycpu/d16-asm/obj/line.o /home/mk41/mycpu/d16-asm/obj/number.o /home/mk41/mycpu/d16-asm/obj/op.o
+objects: /home/mk41/mycpu/d16-asm/obj/matrix.o
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
 
 /home/mk41/mycpu/d16-asm/obj:
 #  Implicit rule search has not been done.
-#  Last modified 2021-10-26 23:25:47.239869631
+#  Implicit/static pattern stem: ''
+#  File does not exist.
 #  File has been updated.
-#  Successfully updated.
+#  Needs to be updated (-q is set).
+# automatic
+# @ := /home/mk41/mycpu/d16-asm/obj
+# automatic
+# * := 
+# automatic
+# < := 
+# automatic
+# + := 
+# automatic
+# % := 
+# automatic
+# ^ := 
+# automatic
+# ? := 
+# automatic
+# | := 
+# variable set hash-table stats:
+# Load=8/32=25%, Rehash=0, Collisions=1/12=8%
 #  recipe to execute (from 'Makefile', line 28):
 	mkdir $@
 
 # Not a target:
-/home/mk41/mycpu/d16-asm/obj/number.o:
-#  Implicit rule search has not been done.
-#  Modification time never checked.
-#  File has not been updated.
-
-# Not a target:
-/home/mk41/mycpu/d16-asm/obj/d16a.o:
-#  Implicit rule search has not been done.
-#  Modification time never checked.
-#  File has not been updated.
-
-# Not a target:
-/home/mk41/mycpu/d16-asm/obj/line.o:
+.SUFFIXES:
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
@@ -500,31 +483,26 @@ remove: clean
 #  File has not been updated.
 
 # Not a target:
-/home/mk41/mycpu/d16-asm/obj/op.o:
-#  Implicit rule search has not been done.
-#  Modification time never checked.
-#  File has not been updated.
-
-# Not a target:
-/home/mk41/mycpu/d16-asm/obj/assemble.o:
-#  Implicit rule search has not been done.
-#  Modification time never checked.
-#  File has not been updated.
+/home/mk41/mycpu/d16-asm/src/matrix.c:
+#  Implicit rule search has been done.
+#  Last modified 2021-11-06 20:48:17.036529743
+#  File has been updated.
+#  Successfully updated.
 
 # files hash-table stats:
-# Load=18/1024=2%, Rehash=0, Collisions=0/54=0%
+# Load=13/1024=1%, Rehash=0, Collisions=0/40=0%
 # VPATH Search Paths
 
 # No 'vpath' search paths.
 
 # No general ('VPATH' variable) search path.
 
-# strcache buffers: 1 (0) / strings = 38 / storage = 589 B / avg = 15 B
-# current buf: size = 8162 B / used = 589 B / count = 38 / avg = 15 B
+# strcache buffers: 1 (0) / strings = 28 / storage = 385 B / avg = 13 B
+# current buf: size = 8162 B / used = 385 B / count = 28 / avg = 13 B
 
-# strcache performance: lookups = 69 / hit rate = 44%
+# strcache performance: lookups = 54 / hit rate = 48%
 # hash-table stats:
-# Load=38/8192=0%, Rehash=0, Collisions=0/69=0%
-# Finished Make data base on Sat Nov  6 20:12:31 2021
+# Load=28/8192=0%, Rehash=0, Collisions=0/54=0%
+# Finished Make data base on Sat Nov  6 21:38:47 2021
 
  
