@@ -14,7 +14,6 @@ struct LabelPlaceholder {
     uint32_t address;
     char *label;
     uint8_t bits; // 16 or 32 
-    bool drf;
 };
 
 struct ASM {
@@ -29,6 +28,7 @@ struct ASM {
 
 extern bool add_words(struct ASM *env, uint16_t *words, size_t num);
 extern bool add_label(struct ASM *env, char *l);
+extern bool get_label(struct ASM *env, char *l, uint32_t *address);
 extern bool add_label_ph(struct ASM *env, char *l, uint8_t bits);
 
 #endif

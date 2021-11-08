@@ -62,7 +62,7 @@ uint16_t *assemble(const char *source, size_t *words) {
                 for (char **w = line; *w; w++)
                     free(*w);
                 free(line);
-                
+
                 line = NULL;
                 num_words = 0;
                 break;
@@ -118,6 +118,33 @@ uint16_t *assemble(const char *source, size_t *words) {
     }
 
     //resolve label placeholders using label table
+    uint32_t address;
+    for (size_t i = 0; i < env.num_placeholders; i++) {
+        if (!get_label(&env, env.tbc[i]->label, &address)) {
+            fprintf(stderr, "Syntax Error: No such label: %s\n", env.tbc[i]->label);
+            goto cleanup;
+        } else if (env.tbc[i]->bits == 16) {
+            env.words[env.tbc[i]->address] = address & 0x0000ffff;
+        } else if (env.tbc[i]->bits == 32) {
+            env.words[env.tbc[i]->address] = address & 0x0000ffff;
+            env.words[env.tbc[i]->address + 1] = (address & 0xffff0000) >> 16;
+        }
+    }
+
+    for (char **w = line; *w; w++)
+        free(*w);
+    free(line);
+
+    for (size_t i = 0; i < env.num_labels; i++)
+        free(env.labels[i]);
+    free(env.labels);
+
+    for (size_t i = 0; i < env.num_placeholders; i++)
+        free(env.tbc[i]);
+    free(env.tbc);
+
+    *words = env.num_words;
+    return env.words;
 
 nomem:
     fprintf(stderr, "malloc failed...\n");

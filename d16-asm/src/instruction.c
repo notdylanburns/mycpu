@@ -79,7 +79,11 @@ static bool parse_a16(struct ASM *env, uint16_t *word, char *w) {
             return true;
 
         case V_LBL:
-            add_label_ph(env, w, 16);
+            uint32_t dword;
+            if (!get_label(env, w, &dword))
+                add_label_ph(env, w, 16);
+            else
+                *word = (uint16_t)(dword & 0x0000ffff);
         
         default:
             fprintf(stderr, "Syntax Error: %s expected address argument\n", w);
@@ -97,7 +101,8 @@ static bool parse_a32(struct ASM *env, uint32_t *dword, char *w) {
             return true;
 
         case V_LBL:
-            add_label_ph(env, w, 32);
+            if (!get_label(env, w, dword))
+                add_label_ph(env, w, 32);
         
         default:
             fprintf(stderr, "Syntax Error: %s expected address argument\n", w);
@@ -106,7 +111,6 @@ static bool parse_a32(struct ASM *env, uint32_t *dword, char *w) {
 }
 
 bool asm_line(char **line, size_t linesize, struct ASM *env) {
-    char *opname = line[0]; 
     struct Instruction *i = get_instruction(line, linesize);
     if (i == NULL)
         goto cleanup;
@@ -123,6 +127,7 @@ bool asm_line(char **line, size_t linesize, struct ASM *env) {
 
     uint16_t word;
     uint32_t dword;
+    uint16_t a[2];
     switch (i->a) {
         case IMM:
             if (!parse_imm(env, &word, line[0]))
@@ -145,8 +150,9 @@ bool asm_line(char **line, size_t linesize, struct ASM *env) {
         case A32_REG:
             if (!parse_a32(env, &dword, line[0]))
                 goto cleanup;
-            uint16_t a[] = { (dword & 0xffff0000) >> 12, (dword & 0x0000ffff) };
-            if (!add_words(env, &a, 2))
+            a[0] = (uint16_t)(dword & 0xffff0000) >> 12; 
+            a[1] = (uint16_t)(dword & 0x0000ffff);
+            if (!add_words(env, a, 2))
                 goto nomem;
             free(i);
             return true;
@@ -166,8 +172,9 @@ bool asm_line(char **line, size_t linesize, struct ASM *env) {
         case A32_IMM:
             if (!parse_a32(env, &dword, line[0]))
                 goto cleanup;
-            uint16_t a[] = { (dword & 0xffff0000) >> 12, (dword & 0x0000ffff) };
-            if (!add_words(env, &a, 2))
+            a[0] = (uint16_t)(dword & 0xffff0000) >> 12; 
+            a[1] = (uint16_t)(dword & 0x0000ffff);
+            if (!add_words(env, a, 2))
                 goto nomem;
             if (!parse_imm(env, &word, line[1]))
                 goto cleanup;
@@ -195,8 +202,9 @@ bool asm_line(char **line, size_t linesize, struct ASM *env) {
         case REG_A32:
             if (!parse_a32(env, &dword, line[1]))
                 goto cleanup;
-            uint16_t a[] = { (dword & 0xffff0000) >> 12, (dword & 0x0000ffff) };
-            if (!add_words(env, &a, 2))
+            a[0] = (uint16_t)(dword & 0xffff0000) >> 12; 
+            a[1] = (uint16_t)(dword & 0x0000ffff);
+            if (!add_words(env, a, 2))
                 goto nomem;
             free(i);
             return true;

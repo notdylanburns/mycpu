@@ -14,9 +14,10 @@
 
 bool run_macro(char *macro, struct ASM *env) {
     char *m = strtok(macro, " ");
-    if (m == NULL)
+    if (m == NULL) {
         fprintf(stderr, "NULL pointer from strtok...\n");
         return false;
+    }
 
     char **argv = NULL;
     size_t argc = 0;

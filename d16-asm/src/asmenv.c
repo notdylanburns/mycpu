@@ -1,5 +1,7 @@
 #include "asmenv.h"
 
+#include <string.h>
+
 bool add_words(struct ASM *env, uint16_t *words, size_t num) {
     uint16_t *tmp = realloc(env->words, env->num_words + num);
     if (tmp == NULL)
@@ -32,6 +34,16 @@ bool add_label(struct ASM *env, char *l) {
     env->labels = tmp;
     env->labels[env->num_labels - 1] = label;
     return true;
+}
+
+bool get_label(struct ASM *env, char *l, uint32_t *address) {
+    for (size_t i = 0; i < env->num_labels; i++)
+        if (!strcmp(env->labels[i]->label, l)) {
+            *address = env->labels[i]->address;
+            return true;
+        }
+
+    return false;
 }
 
 bool add_label_ph(struct ASM *env, char *l, uint8_t bits) {
