@@ -1,7 +1,7 @@
 import csv
 import sys
 
-def main(file: str):
+def main(file: str, out: str):
     words: list[int] = [0x80000000] * (2 ** 20)
     output: bytearray = bytearray([0] * (2 ** 22))
 
@@ -41,8 +41,8 @@ def main(file: str):
         output[4 * i + 3] = (w & 0x000000ff)
         i += 1
     
-    with open("bin/microcode.bin", "wb") as f:
+    with open(out, "wb") as f:
         f.write(output)
 
 if __name__ == "__main__":
-    main(sys.argv[1])
+    main(sys.argv[1], sys.argv[2])
