@@ -57,7 +57,7 @@ static bool parse_imm(struct ASM *env, uint16_t *word, char *w) {
     (void)env;
     switch (get_type(w)) {
         case V_IMM:
-            if (!value16(w + 1, word)) {
+            if (!value16(w, word)) {
                 fprintf(stderr, "Syntax Error: Invalid constant: %s\n", w);
                 return false;
             }
@@ -80,10 +80,14 @@ static bool parse_a16(struct ASM *env, uint16_t *word, char *w) {
 
         case V_LBL:
             uint32_t dword;
-            if (!get_label(env, w, &dword))
-                add_label_ph(env, w, 16);
-            else
+            if (!get_label(env, w, &dword)) {
+                if (!add_label_ph(env, w, 16)) {
+                    fprintf(stderr, "malloc failed...\n");
+                    return false;
+                }
+            } else
                 *word = (uint16_t)(dword & 0x0000ffff);
+            return true;
         
         default:
             fprintf(stderr, "Syntax Error: %s expected address argument\n", w);
@@ -102,7 +106,11 @@ static bool parse_a32(struct ASM *env, uint32_t *dword, char *w) {
 
         case V_LBL:
             if (!get_label(env, w, dword))
-                add_label_ph(env, w, 32);
+                if (!add_label_ph(env, w, 32)) {
+                    fprintf(stderr, "malloc failed...\n");
+                    return false;
+                }
+            return true;
         
         default:
             fprintf(stderr, "Syntax Error: %s expected address argument\n", w);
@@ -150,7 +158,7 @@ bool asm_line(char **line, size_t linesize, struct ASM *env) {
         case A32_REG:
             if (!parse_a32(env, &dword, line[0]))
                 goto cleanup;
-            a[0] = (uint16_t)(dword & 0xffff0000) >> 12; 
+            a[0] = (uint16_t)((dword & 0xffff0000) >> 16); 
             a[1] = (uint16_t)(dword & 0x0000ffff);
             if (!add_words(env, a, 2))
                 goto nomem;
@@ -172,7 +180,7 @@ bool asm_line(char **line, size_t linesize, struct ASM *env) {
         case A32_IMM:
             if (!parse_a32(env, &dword, line[0]))
                 goto cleanup;
-            a[0] = (uint16_t)(dword & 0xffff0000) >> 12; 
+            a[0] = (uint16_t)((dword & 0xffff0000) >> 16); 
             a[1] = (uint16_t)(dword & 0x0000ffff);
             if (!add_words(env, a, 2))
                 goto nomem;
@@ -202,7 +210,7 @@ bool asm_line(char **line, size_t linesize, struct ASM *env) {
         case REG_A32:
             if (!parse_a32(env, &dword, line[1]))
                 goto cleanup;
-            a[0] = (uint16_t)(dword & 0xffff0000) >> 12; 
+            a[0] = (uint16_t)((dword & 0xffff0000) >> 16); 
             a[1] = (uint16_t)(dword & 0x0000ffff);
             if (!add_words(env, a, 2))
                 goto nomem;
@@ -342,7 +350,7 @@ struct Instruction *get_instruction(char **line, size_t linesize) {
                 break;
         }
     } else {
-        fprintf(stderr, "Syntax Error: Too many arguments for opcode: %s", line[0]);
+        fprintf(stderr, "Syntax Error: Too many arguments for opcode: %s\n", line[0]);
         return NULL;
     }
 

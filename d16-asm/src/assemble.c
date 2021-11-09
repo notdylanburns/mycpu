@@ -56,15 +56,19 @@ uint16_t *assemble(const char *source, size_t *words) {
                     if (!add_word(word, &line, &num_words))
                         goto nomem;
 
-                if (!asm_line(line, num_words, &env))
-                    goto nomem;
+                if (line != NULL) {
+                    if (!asm_line(line, num_words, &env))
+                        goto cleanup;
 
-                for (char **w = line; *w; w++)
-                    free(*w);
-                free(line);
+                    for (size_t i = 0; i < num_words; i++)
+                        free(line[i]);
+                    free(line);
+                }
 
                 line = NULL;
+                word = NULL;
                 num_words = 0;
+                len_word = 0;
                 break;
 
             case ' ':
@@ -93,20 +97,25 @@ uint16_t *assemble(const char *source, size_t *words) {
                 break;
 
             case ';':
-                while (*c != '\n') c++;
+                while (*c != '\n' && (c - source != strlen(source))) c++;
+                c--;
                 break;
 
             case ':':
-                if (num_words > 1) {
+                if (num_words > 0) {
                     fprintf(stderr, "Syntax Error: Label names may not contain spaces\n");
                     goto cleanup;
-                } else if (num_words == 0) {
+                } else if (len_word == 0) {
                     fprintf(stderr, "Syntax Error: Empty label\n");
                     goto cleanup;
                 }
 
-                if (!add_label(&env, line[0]))
+                if (!add_label(&env, word))
                     goto nomem;
+
+                free(word);
+                word = NULL;
+                len_word = 0;
 
                 break;
         
@@ -123,20 +132,24 @@ uint16_t *assemble(const char *source, size_t *words) {
         if (!get_label(&env, env.tbc[i]->label, &address)) {
             fprintf(stderr, "Syntax Error: No such label: %s\n", env.tbc[i]->label);
             goto cleanup;
-        } else if (env.tbc[i]->bits == 16) {
-            env.words[env.tbc[i]->address] = address & 0x0000ffff;
-        } else if (env.tbc[i]->bits == 32) {
+        }
+
+        env.words[env.tbc[i]->address] = address & 0x0000ffff;
+        if (env.tbc[i]->bits == 32) {
             env.words[env.tbc[i]->address] = address & 0x0000ffff;
             env.words[env.tbc[i]->address + 1] = (address & 0xffff0000) >> 16;
         }
     }
 
-    for (char **w = line; *w; w++)
-        free(*w);
+    if (line != NULL)
+        for (char **w = line; *w; w++)
+            free(*w);
     free(line);
 
-    for (size_t i = 0; i < env.num_labels; i++)
+    for (size_t i = 0; i < env.num_labels; i++) {
+        free(env.labels[i]->label);
         free(env.labels[i]);
+    }
     free(env.labels);
 
     for (size_t i = 0; i < env.num_placeholders; i++)
@@ -150,14 +163,17 @@ nomem:
     fprintf(stderr, "malloc failed...\n");
 
 cleanup:
-    for (char **w = line; *w; w++)
-        free(*w);
+    if (line != NULL)
+        for (size_t i = 0; i < num_words; i++)
+            free(line[i]);
     free(line);
 
     free(env.words);
 
-    for (size_t i = 0; i < env.num_labels; i++)
+    for (size_t i = 0; i < env.num_labels; i++) {
+        free(env.labels[i]->label);
         free(env.labels[i]);
+    }
     free(env.labels);
 
     for (size_t i = 0; i < env.num_placeholders; i++)

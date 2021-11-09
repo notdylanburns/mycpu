@@ -24,10 +24,10 @@ bool value16(char *value, uint16_t *v) {
     size_t e;
     switch (value[0]) {
         case '\'': //bin
-            e = strlen(value + 1);
+            e = strlen(value + 1) - 1;
             for (char *c = (value + 1); *c; c++) {
                 if (*c == '1' || *c == '0')
-                    *v += ((*c == '1') << (e - 1));
+                    *v += (uint16_t)((*c == '1') << e);
                 else
                     return false;
                 e--;
@@ -35,14 +35,14 @@ bool value16(char *value, uint16_t *v) {
             return true;
 
         case '$': //hex
-            e = strlen(value + 1);
+            e = strlen(value + 1) - 1;
             for (char *c = (value + 1); *c; c++) {
-                if (*c >= '0' || *c <= '9')
-                    *v += ((*c - '0') << (4 * (e - 1)));
-                else if (*c >= 'a' || *c <= 'f')
-                    *v += ((10 + *c - 'a') << (4 * (e - 1)));
-                else if (*c >= 'A' || *c <= 'F')
-                    *v += ((10 + *c - 'A') << (4 * (e - 1)));
+                if (*c >= '0' && *c <= '9')
+                    *v += (uint16_t)((*c - '0') << (4 * e));
+                else if (*c >= 'a' && *c <= 'f')
+                    *v += (uint16_t)((10 + *c - 'a') << (4 * e));
+                else if (*c >= 'A' && *c <= 'F')
+                    *v += (uint16_t)((10 + *c - 'A') << (4 * e));
                 else
                     return false;
                 e--;
@@ -51,7 +51,7 @@ bool value16(char *value, uint16_t *v) {
 
         default: //dec
             for (char *c = value; *c; c++)
-                if ('0' > *c || *c > '9')
+                if ('0' > *c && *c > '9')
                     return false;
             *v = atoi(value);
             return true;
@@ -63,10 +63,10 @@ bool value32(char *value, uint32_t *v) {
     size_t e;
     switch (value[0]) {
         case '\'': //bin
-            e = strlen(value + 1);
+            e = strlen(value + 1) - 1;
             for (char *c = (value + 1); *c; c++) {
                 if (*c == '1' || *c == '0')
-                    *v += ((*c == '1') << (e - 1));
+                    *v += (uint32_t)((*c == '1') << e);
                 else
                     return false;
                 e--;
@@ -74,14 +74,14 @@ bool value32(char *value, uint32_t *v) {
             return true;
 
         case '$': //hex
-            e = strlen(value + 1);
+            e = strlen(value + 1) - 1;
             for (char *c = (value + 1); *c; c++) {
-                if (*c >= '0' || *c <= '9')
-                    *v += ((*c - '0') << (4 * (e - 1)));
-                else if (*c >= 'a' || *c <= 'f')
-                    *v += ((10 + *c - 'a') << (4 * (e - 1)));
-                else if (*c >= 'A' || *c <= 'F')
-                    *v += ((10 + *c - 'A') << (4 * (e - 1)));
+                if (*c >= '0' && *c <= '9')
+                    *v += (uint32_t)((*c - '0') << (4 * e));
+                else if (*c >= 'a' && *c <= 'f')
+                    *v += (uint32_t)((10 + *c - 'a') << (4 * e));
+                else if (*c >= 'A' && *c <= 'F')
+                    *v += (uint32_t)((10 + *c - 'A') << (4 * e));
                 else
                     return false;
                 e--;
@@ -90,7 +90,7 @@ bool value32(char *value, uint32_t *v) {
 
         default: //dec
             for (char *c = value; *c; c++)
-                if ('0' > *c || *c > '9')
+                if ('0' > *c && *c > '9')
                     return false;
             *v = atoi(value);
             return true;

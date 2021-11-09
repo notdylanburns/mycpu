@@ -3,7 +3,7 @@
 #include <string.h>
 
 bool add_words(struct ASM *env, uint16_t *words, size_t num) {
-    uint16_t *tmp = realloc(env->words, env->num_words + num);
+    uint16_t *tmp = realloc(env->words, (env->num_words + num) * sizeof(uint16_t));
     if (tmp == NULL)
         return false;
 
@@ -22,7 +22,12 @@ bool add_label(struct ASM *env, char *l) {
     if (label == NULL)
         return false;
 
-    label->label = l;
+    label->label = calloc(1, strlen(l) + 1);
+    if (label->label == NULL) {
+        free(label);
+        return false;
+    }
+    strcpy(label->label, l);
     label->address = env->address;
 
     (env->num_labels)++;
@@ -51,7 +56,12 @@ bool add_label_ph(struct ASM *env, char *l, uint8_t bits) {
     if (lph == NULL)
         return false;
 
-    lph->label = l;
+    lph->label = calloc(1, strlen(l) + 1);
+    if (lph->label == NULL) {
+        free(lph);
+        return false;
+    }
+    strcpy(lph->label, l);
     lph->address = env->num_words;
 
     (env->num_placeholders)++;
@@ -61,6 +71,7 @@ bool add_label_ph(struct ASM *env, char *l, uint8_t bits) {
         return false;
     }
     env->tbc = tmp;
+    lph->bits = bits;
     env->tbc[env->num_placeholders - 1] = lph;
     return true;
 }

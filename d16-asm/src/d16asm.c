@@ -2,6 +2,7 @@
 #include <stdio.h>
 
 #include "assemble.h"
+#include "endianness.h"
 
 int main(int argc, char **argv) {
     if (argc < 2) {
@@ -35,14 +36,31 @@ int main(int argc, char **argv) {
     size_t wc;
     uint16_t *words = assemble(cont, &wc);
 
+    if (words == NULL)
+        return 1;
+
     FILE *output = fopen(argv[2], "wb+");
     if (output == NULL) {
         fprintf(stderr, "No such file '%s'\n", argv[2]);
         return 1;
     }
-    if (fwrite(words, 2, wc, output) != wc) {
-        fprintf(stderr, "Error while writing '%s'\n", argv[2]);
-        return 1;
+
+    if (get_endianness() == BE) {
+        if (fwrite(words, 2, wc, output) != wc) {
+            fprintf(stderr, "Error while writing '%s'\n", argv[2]);
+            return 1;
+        }
+    } else {
+        uint8_t bytes[2 * wc];
+        for (size_t i = 0; i < wc; i++) {
+            uint16_t w = words[i];
+            bytes[2 * i] = w & 0xffff0000;
+            bytes[(2 * i) + 1] = w & 0x0000ffff;
+        }
+        if (fwrite(bytes, 1, 2 * wc, output) != (2 * wc)) {
+            fprintf(stderr, "Error while writing '%s'\n", argv[2]);
+            return 1;
+        }
     }
 
     return 0;

@@ -3,6 +3,8 @@ start:
     mov %0 1234         ; stores 1234 in %0
     mov *$9a7d '1101    ; stores 0b1101 at memory location 0x9a7d
     mov *$ffff0003 10   ; stores 10 at memory location 0xffff0003
+    mov data $f
 
-.sub_label:
+data:
+    !dw 0
     
