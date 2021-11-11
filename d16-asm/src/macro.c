@@ -12,80 +12,134 @@
     "!dword", "!ddw",   // takes a 32 bit constant
 */
 
-bool run_macro(char *macro, struct ASM *env) {
-    char *m = strtok(macro, " ");
-    if (m == NULL) {
-        fprintf(stderr, "NULL pointer from strtok...\n");
+static bool _macro_org(struct ASM *env, size_t argc, char **argv) {
+    if (argc != 2) {
+        fprintf(stderr, "Macro Error: %s expects 1 argument (got %lu)\n", argv[0], argc);
         return false;
     }
 
-    char **argv = NULL;
-    size_t argc = 0;
+    if (!value32(argv[1], &(env->address))) {
+        fprintf(stderr, "Macro Error: Invalid argument '%s' for %s\n", argv[0], argv[1]);
+        return false;
+    }
+
+    return true;
+}
+
+static bool _macro_dw(struct ASM *env, size_t argc, char **argv) {
+    if (argc != 2) {
+        fprintf(stderr, "Macro Error: %s expects 1 argument (got %lu)\n", argv[0], argc);
+        return false;
+    }
+
+    uint16_t word;
+    switch (get_type(argv[1])) {
+        case V_LBL:
+            if (!add_label_ph(env, argv[1], 16))
+                return false;
+            break;
+        
+        default:
+            if (!value16(argv[1], &word)) {
+                fprintf(stderr, "Macro Error: Invalid argument '%s' for %s\n", argv[1], argv[0]);
+                return false;
+            }
+            break;
+    }
+
+    if (!add_words(env, &word, 1)) {
+        fprintf(stderr, "malloc failed...\n");
+        return false;
+    }
+
+    return true;
+}
+
+static bool _macro_ddw(struct ASM *env, size_t argc, char **argv) {
+    if (argc != 2) {
+        fprintf(stderr, "Macro Error: %s expects 1 argument (got %lu)\n", argv[0], argc);
+        return false;
+    }
+
+    uint32_t dword;
+    uint16_t a[2];
+    switch (get_type(argv[1])) {
+        case V_LBL:
+            if (!add_label_ph(env, argv[1], 32))
+                return false;
+            break;
+        
+        default:
+            if (!value32(argv[1], &dword)) {
+                fprintf(stderr, "Macro Error: Invalid argument '%s' for %s\n", argv[1], argv[0]);
+                return false;
+            }
+            break;
+    }
+
+    a[0] = (uint16_t)((dword & 0xffff0000) >> 12);
+    a[1] = (uint16_t)((dword & 0x0000ffff));
+    if (!add_words(env, a, 2)) {
+        fprintf(stderr, "malloc failed...\n");
+        return false;
+    }
+
+    return true;
+}
+
+struct MACRO {
+    char *name;
+    bool (*action)(struct ASM *, size_t, char **);
+};
+
+static const struct MACRO *MACROS[] = {
+    &(struct MACRO){ "!org"  , &_macro_org },
+    &(struct MACRO){ "!dw"   , &_macro_dw  },
+    &(struct MACRO){ "!word" , &_macro_dw  },
+    &(struct MACRO){ "!ddw"  , &_macro_ddw },
+    &(struct MACRO){ "!dword", &_macro_ddw },
+    NULL,
+};
+
+bool run_macro(char *macro, struct ASM *env) {
+    char **argv = malloc(sizeof(char *));
+    if (argv == NULL)
+        goto nomem;
+    
+    *argv = strtok(macro, " ");
+    if (*argv == NULL) {
+        fprintf(stderr, "NULL pointer from strtok...\n");
+        goto cleanup;
+    }
+
+    size_t argc = 1;
     char *a = strtok(NULL, " ");
     while (a != NULL) {
         char **tmp = realloc(argv, (++argc) * sizeof(char *));
-        if (tmp == NULL) {
-            free(argv);
-            fprintf(stderr, "malloc failed...\n");
-            return false;
-        }
+        if (tmp == NULL)
+            goto nomem;
+
         argv = tmp;
         argv[argc - 1] = a;
         a = strtok(NULL, " ");
     }
 
-
-    if (!strcmp(m, "!org")) {
-        if (argc != 1) {
-            fprintf(stderr, "Macro Error: !org expects 1 argument\n");
-            return false;
+    for (const struct MACRO **m = MACROS; *m; m++)
+        if (!strcmp(argv[0], (*m)->name)) {
+            if (!(*m)->action(env, argc, argv))
+                goto cleanup;
+            free(argv);
+            return true;
         }
+    
+    fprintf(stderr, "Macro Error: No such macro: %s\n", argv[0]);
+    goto cleanup;
 
-        if (get_type(argv[0]) != V_IMM || !value32(argv[0], &(env->address))) {
-            fprintf(stderr, "Macro Error: !org expects a constant\n");
-            return false;
-        }
-        return true;
-    } else if (!strcmp(m, "!word") || !strcmp(m, "!dw")) {
-        if (argc != 1) {
-            fprintf(stderr, "Macro Error: %s expects 1 argument\n", m);
-            return false;
-        }
+nomem:
+    fprintf(stderr, "malloc failed...\n");
 
-        uint16_t word;
-        if (get_type(argv[0]) != V_IMM || !value16(argv[0], &word)) {
-            fprintf(stderr, "Macro Error: %s expects a constant\n", m);
-            return false;
-        }
-
-        if (!add_words(env, &word, 1)) {
-            fprintf(stderr, "malloc failed...\n");
-            return false;
-        }
-
-        return true;
-    } else if (!strcmp(m, "!dword") || !strcmp(m, "!ddw")) {
-        if (argc != 1) {
-            fprintf(stderr, "Macro Error: %s expects 1 argument\n", m);
-            return false;
-        }
-
-        uint32_t dword;
-        if (get_type(argv[0]) != V_IMM || !value32(argv[0], &dword)) {
-            fprintf(stderr, "Macro Error: %s expects a constant\n", m);
-            return false;
-        }
-
-        uint16_t words[] = { (dword & 0xffff0000) >> 16, (dword & 0x0000ffff) };
-        if (!add_words(env, words, 2)) {
-            fprintf(stderr, "malloc failed...\n");
-            return false;
-        }
-
-        return true;
-    } else {
-        fprintf(stderr, "Macro Error: Unknown macro: %s\n", m);
-        return false;
-    }
+cleanup:
+    free(argv);
+    return false;
 
 }

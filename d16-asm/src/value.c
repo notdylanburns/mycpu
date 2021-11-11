@@ -51,7 +51,7 @@ bool value16(char *value, uint16_t *v) {
 
         default: //dec
             for (char *c = value; *c; c++)
-                if ('0' > *c && *c > '9')
+                if ('0' > *c || *c > '9')
                     return false;
             *v = atoi(value);
             return true;
@@ -90,7 +90,7 @@ bool value32(char *value, uint32_t *v) {
 
         default: //dec
             for (char *c = value; *c; c++)
-                if ('0' > *c && *c > '9')
+                if ('0' > *c || *c > '9')
                     return false;
             *v = atoi(value);
             return true;

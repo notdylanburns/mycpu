@@ -79,7 +79,7 @@ static bool parse_a16(struct ASM *env, uint16_t *word, char *w) {
             return true;
 
         case V_LBL:
-            uint32_t dword;
+            uint32_t dword = 0;
             if (!get_label(env, w, &dword)) {
                 if (!add_label_ph(env, w, 16)) {
                     fprintf(stderr, "malloc failed...\n");
@@ -123,7 +123,7 @@ bool asm_line(char **line, size_t linesize, struct ASM *env) {
     if (i == NULL)
         goto cleanup;
 
-    uint16_t op;
+    uint16_t op = 0;
     if (!get_opcode(i, &op))
         goto cleanup;
 
@@ -133,9 +133,9 @@ bool asm_line(char **line, size_t linesize, struct ASM *env) {
     linesize--;
     line++;
 
-    uint16_t word;
-    uint32_t dword;
-    uint16_t a[2];
+    uint16_t word = 0;
+    uint32_t dword = 0;
+    uint16_t a[2] = {0, 0};
     switch (i->a) {
         case IMM:
             if (!parse_imm(env, &word, line[0]))
@@ -249,7 +249,7 @@ struct Instruction *get_instruction(char **line, size_t linesize) {
                 a = A32;
                 break;
             case V_ADR:
-                uint32_t addr;
+                uint32_t addr = 0;
                 if (!value32(line[1] + 1, &addr)) {
                     fprintf(stderr, "Syntax Error: Invalid address: %s\n", line[1]);
                     return NULL;
@@ -288,7 +288,7 @@ struct Instruction *get_instruction(char **line, size_t linesize) {
                 }
                 break;
             case V_ADR:
-                uint32_t addr;
+                uint32_t addr = 0;
                 if (!value32(line[1] + 1, &addr)) {
                     fprintf(stderr, "Syntax Error: Invalid address: %s\n", line[1]);
                     return NULL;
@@ -334,7 +334,7 @@ struct Instruction *get_instruction(char **line, size_t linesize) {
                 } else if (t == V_IMM)
                     a = REG_IMM;
                 else if (t == V_ADR) {
-                    uint32_t addr;
+                    uint32_t addr = 0;
                     if (!value32(line[2] + 1, &addr)) {
                         fprintf(stderr, "Syntax Error: Invalid address: %s\n", line[2]);
                         return NULL;
