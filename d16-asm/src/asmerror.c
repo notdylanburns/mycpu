@@ -53,9 +53,8 @@ long end_of(char *line, size_t w) {
 void print_err(struct ASM *env, enum ERROR_TYPE t, char *msg, size_t estart, size_t eend) {
     /*
         Assembly resulted in an error
-            at stdio.inc line 3
-            at main.s line 1
-        =============================
+            at /home/mk41/mycpu/d16-asm/tests/src/macros.S line 11
+
         00000000:    mov %0 #$12lk
                             ^^^^^^
         Syntax Error: Invalid integer literal
@@ -70,7 +69,7 @@ void print_err(struct ASM *env, enum ERROR_TYPE t, char *msg, size_t estart, siz
     fprintf(stderr, "    at %s line %lu\n", env->file, env->lineno);
     //for (struct From **f = env->from; *f; f++)
     //    fprintf(stderr, "    at %s line %lu", (*f)->file, (*f)->lineno);
-    fprintf(stderr, "=============================\n");
+    fprintf(stderr, "\n");
     fprintf(stderr, "%08x:    %s\n", env->address, env->cur_line + indent);
     if (eend >= estart) {
         fprintf(stderr, "             %*s", (int)(estart - indent), "");

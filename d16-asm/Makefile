@@ -6,6 +6,7 @@ ROOT_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 INC_DIR := $(ROOT_DIR)/inc
 SRC_DIR := $(ROOT_DIR)/src
 OBJ_DIR := $(ROOT_DIR)/obj
+TST_DIR := $(ROOT_DIR)/tests
 
 MICROCODE_FILE := $(dir $(ROOT_DIR))Microcode.csv
 
@@ -32,6 +33,9 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(OBJ_DIR)
 
 $(OBJ_DIR):
 	mkdir $@
+
+tests: $(TARGET)
+	make -C $(TST_DIR)
 
 clean:
 	rm -rf $(OBJ_DIR)
