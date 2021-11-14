@@ -12,11 +12,13 @@ enum VAL_TYPE {
     V_LLO,      // lo word of label, #label
     V_LHI,      // hi word of label, @label
     V_IND,      // indirect register *n
+    V_STR,      // string
 };
 
 extern enum VAL_TYPE get_type(char *value);
 extern bool value16(char *value, uint16_t *v);
 extern bool value32(char *value, uint32_t *v);
+extern bool string16(char *value, uint16_t **v);
 extern bool get_register(char n, uint8_t *r);
 
 #endif

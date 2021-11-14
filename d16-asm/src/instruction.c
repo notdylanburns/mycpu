@@ -220,6 +220,10 @@ struct Instruction *get_instruction(struct ASM *env, char **line, size_t linesiz
                     }
                     a[i - 1] = IND;
                     break;
+
+                default:
+                    print_err(env, SYNTAX_ERROR, "Invalid argument", STARTOF(i), ENDOF(i));
+                    return NULL;
             }
         }
     }

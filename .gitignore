@@ -5,3 +5,5 @@ test.bin
 valgrind-out.txt
 todo
 test.c
+test
+*/tests/bin/*.bin

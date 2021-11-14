@@ -9,17 +9,6 @@ static const char *STR_ERROR[] = {
     "Label Error",
 };
 
-/*
-struct AsmError {
-    size_t line_no;
-    char **line;
-    char *file;
-    enum ERROR_TYPE t;
-    uint32_t address;
-    char *msg;
-};
-*/
-
 long start_of(char *line, size_t w) {
     size_t count = 0;
     bool broken = false;
@@ -65,19 +54,19 @@ void print_err(struct ASM *env, enum ERROR_TYPE t, char *msg, size_t estart, siz
     }
 
     size_t indent = strspn(env->cur_line, " ");
-    fprintf(stderr, "Assembly resulted in an error\n");
+    fprintf(stderr, "\n\033[1;37mAssembly resulted in an error\033[0;32m\n");
     fprintf(stderr, "    at %s line %lu\n", env->file, env->lineno);
     //for (struct From **f = env->from; *f; f++)
     //    fprintf(stderr, "    at %s line %lu", (*f)->file, (*f)->lineno);
     fprintf(stderr, "\n");
-    fprintf(stderr, "%08x:    %s\n", env->address, env->cur_line + indent);
+    fprintf(stderr, "\033[1;36m%08x:\033[0;37m    %.*s\033[1;35m%.*s\033[0;37m%s\n", env->address, (int)(estart - indent), env->cur_line + indent, (int)(1 + eend - estart), env->cur_line + estart, 1 + env->cur_line + eend);
     if (eend >= estart) {
-        fprintf(stderr, "             %*s", (int)(estart - indent), "");
+        fprintf(stderr, "             %*s\033[1;31m", (int)(estart - indent), "");
         for (size_t i = estart - indent; i <= (eend - indent); i++)
             fprintf(stderr, "^");
     }
     
-    fprintf(stderr, "\n%s: %s\n", STR_ERROR[t], msg);
+    fprintf(stderr, "\n\033[1;37m%s: %s\033[0;37m\n", STR_ERROR[t], msg);
 }
 
 void internal_err(char *msg) {

@@ -1,8 +1,0 @@
-make --dry-run --always-make --keep-going --print-directory
-make: Entering directory '/home/mk41/mycpu/d16-asm'
-mkdir /home/mk41/mycpu/d16-asm/obj
-gcc -Wall -Werror -I/home/mk41/mycpu/d16-asm/inc -ggdb3 -c /home/mk41/mycpu/d16-asm/src/matrix.c -o /home/mk41/mycpu/d16-asm/obj/matrix.o 
-gcc -llog -lm -o d16a /home/mk41/mycpu/d16-asm/obj/matrix.o
-rm -rf /home/mk41/mycpu/d16-asm/obj
-make: Leaving directory '/home/mk41/mycpu/d16-asm'
- 

@@ -19,6 +19,16 @@ enum VAL_TYPE get_type(char *value) {
 
         case '*':
             return V_IND;
+        
+        case 'b':   // byte string (2 chars per machine word)
+        case 'w':   // wide string (1 char per machine word, utf-16)
+            if (value[1] == '"')
+                return V_STR;
+            else
+                return V_LBL;
+        
+        case '"':   // default is wide string
+            return V_STR;
 
         default:
             if (('0' <= value[0] && '9' >= value[0]) || value[0] == '$' || value[0] == '\'')

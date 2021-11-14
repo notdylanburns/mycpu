@@ -6,6 +6,7 @@
 
 #include "asmerror.h"
 #include "label.h"
+#include "asmstring.h"
 #include "value.h"
 #include "utils.h"
 
@@ -17,15 +18,15 @@
 
 static bool _macro_org(struct ASM *env, size_t argc, char **argv) {
     if (argc < 2) {
-        print_err(env, MACRO_ERROR, "!org expects 1 argument", argv[0], argc);
+        print_err(env, MACRO_ERROR, "Too few arguments", STARTOF(0), ENDOF(argc - 1));
         return false;
     } else if (argc > 2) {
-        print_err(env, MACRO_ERROR, "!org expects 1 argument", argv[0], argc);
+        print_err(env, MACRO_ERROR, "Too many arguments", STARTOF(2), ENDOF(argc - 1));
         return false;
     }
 
     if (!value32(argv[1], &(env->address))) {
-        print_err(env, MACRO_ERROR, "Invalid argument '%s' for %s", argv[1], argv[0]);
+        print_err(env, MACRO_ERROR, "Invalid integer literal", STARTOF(1), ENDOF(1));
         return false;
     }
 
@@ -33,8 +34,11 @@ static bool _macro_org(struct ASM *env, size_t argc, char **argv) {
 }
 
 static bool _macro_dw(struct ASM *env, size_t argc, char **argv) {
-    if (argc != 2) {
-        print_err(env, MACRO_ERROR, "%s expects 1 argument (got %lu)", argv[0], argc);
+    if (argc < 2) {
+        print_err(env, MACRO_ERROR, "Too few arguments", STARTOF(0), ENDOF(argc - 1));
+        return false;
+    } else if (argc > 2) {
+        print_err(env, MACRO_ERROR, "Too many arguments", STARTOF(2), ENDOF(argc - 1));
         return false;
     }
 
@@ -51,7 +55,7 @@ static bool _macro_dw(struct ASM *env, size_t argc, char **argv) {
         
         default:
             if (!value16(argv[1], &word)) {
-                print_err(env, MACRO_ERROR, "Invalid argument '%s' for %s", argv[1], argv[0]);
+                print_err(env, MACRO_ERROR, "Invalid integer literal", STARTOF(1), ENDOF(1));
                 return false;
             }
             break;
@@ -66,8 +70,11 @@ static bool _macro_dw(struct ASM *env, size_t argc, char **argv) {
 }
 
 static bool _macro_ddw(struct ASM *env, size_t argc, char **argv) {
-    if (argc != 2) {
-        print_err(env, MACRO_ERROR, "%s expects 1 argument (got %lu)", argv[0], argc);
+    if (argc < 2) {
+        print_err(env, MACRO_ERROR, "Too few arguments", STARTOF(0), ENDOF(argc - 1));
+        return false;
+    } else if (argc > 2) {
+        print_err(env, MACRO_ERROR, "Too many arguments", STARTOF(2), ENDOF(argc - 1));
         return false;
     }
 
@@ -81,7 +88,7 @@ static bool _macro_ddw(struct ASM *env, size_t argc, char **argv) {
         
         default:
             if (!value32(argv[1], &dword)) {
-                print_err(env, MACRO_ERROR, "Invalid argument '%s' for %s", argv[1], argv[0]);
+                print_err(env, MACRO_ERROR, "Invalid integer literal", STARTOF(1), ENDOF(1));
                 return false;
             }
             break;
@@ -97,17 +104,55 @@ static bool _macro_ddw(struct ASM *env, size_t argc, char **argv) {
     return true;
 }
 
+static bool _macro_str(struct ASM *env, size_t argc, char **argv) {
+    if (argc < 2) {
+        print_err(env, MACRO_ERROR, "Too few arguments", STARTOF(0), ENDOF(argc - 1));
+        return false;
+    } else if (argc > 2) {
+        print_err(env, MACRO_ERROR, "Too many arguments", STARTOF(2), ENDOF(argc - 1));
+        return false;
+    }
+
+    if (get_type(argv[1]) == V_STR) {
+        size_t len;
+        if (!word_len(argv[1], &len)) {
+            print_err(env, MACRO_ERROR, "Invalid string literal", STARTOF(1), ENDOF(1));
+            return false;
+        }
+
+        uint16_t words[len];
+
+        if (!strval(argv[1], words)) {
+            print_err(env, MACRO_ERROR, "Invalid string literal", STARTOF(1), ENDOF(1));
+            return false;
+        }
+
+        if (!add_words(env, words, len)) {
+            internal_err("malloc failed...");
+            return false;
+        }
+    
+    } else {
+        print_err(env, MACRO_ERROR, "Expected string literal", STARTOF(1), ENDOF(1));
+        return false;
+    }
+
+    return true;
+}
+
 struct MACRO {
     char *name;
     bool (*action)(struct ASM *, size_t, char **);
 };
 
 static const struct MACRO *MACROS[] = {
-    &(struct MACRO){ "!org"  , &_macro_org },
-    &(struct MACRO){ "!dw"   , &_macro_dw  },
-    &(struct MACRO){ "!word" , &_macro_dw  },
-    &(struct MACRO){ "!ddw"  , &_macro_ddw },
-    &(struct MACRO){ "!dword", &_macro_ddw },
+    &(struct MACRO){ "!org"         , &_macro_org },
+    &(struct MACRO){ "!dw"          , &_macro_dw  },
+    &(struct MACRO){ "!word"        , &_macro_dw  },
+    &(struct MACRO){ "!ddw"         , &_macro_ddw },
+    &(struct MACRO){ "!dword"       , &_macro_ddw },
+    &(struct MACRO){ "!str"         , &_macro_str },
+    &(struct MACRO){ "!string"      , &_macro_str },
     NULL,
 };
 

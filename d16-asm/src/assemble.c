@@ -182,8 +182,8 @@ uint16_t *assemble(char *filename, const char *source, size_t *words) {
                     env.words[env.tbc[i]->address] = (uint16_t)((addr & 0xffff0000) >> 16);
                     break;
                 case BITS_32:
-                    env.words[env.tbc[i]->address] = (uint16_t)(addr & 0x0000ffff);
-                    env.words[env.tbc[i]->address + 1] = (uint16_t)((addr & 0xffff0000) >> 16);
+                    env.words[env.tbc[i]->address] = (uint16_t)((addr & 0xffff0000) >> 16);
+                    env.words[env.tbc[i]->address + 1] = (uint16_t)(addr & 0x0000ffff);
                     break;
             }
         }
@@ -192,12 +192,16 @@ uint16_t *assemble(char *filename, const char *source, size_t *words) {
     free(lines);
     free(cpy);
 
-    for (size_t i = 0; i < env.num_labels; i++)
+    for (size_t i = 0; i < env.num_labels; i++) {
+        free(env.labels[i]->label);
         free(env.labels[i]);
+    }
     free(env.labels);
 
-    for (size_t i = 0; i < env.num_placeholders; i++)
+    for (size_t i = 0; i < env.num_placeholders; i++) {
+        free(env.tbc[i]->label);
         free(env.tbc[i]);
+    }
     free(env.tbc);
 
     *words = env.num_words;
@@ -209,13 +213,17 @@ nomem:
 cleanup:
     free(lines);
     free(cpy);
-    
-    for (size_t i = 0; i < env.num_labels; i++)
+
+    for (size_t i = 0; i < env.num_labels; i++) {
+        free(env.labels[i]->label);
         free(env.labels[i]);
+    }
     free(env.labels);
 
-    for (size_t i = 0; i < env.num_placeholders; i++)
+    for (size_t i = 0; i < env.num_placeholders; i++) {
+        free(env.tbc[i]->label);
         free(env.tbc[i]);
+    }
     free(env.tbc);
 
     return NULL;

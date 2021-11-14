@@ -9,3 +9,5 @@
     !word 29292                 ; r l
     
     !ddw $64210000              ; d !
+
+    !str b"/home/mk411/mycpu/d16-asm/test.d16"
