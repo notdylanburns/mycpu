@@ -5,10 +5,13 @@
 #include <stdint.h>
 
 enum VAL_TYPE {
-    V_IMM,      // $nnnn (16 bit literal)
-    V_ADR,      // *$nnnn or *$nnnnnnnn (16 or 32 bit address)
+    V_IMM,      // #$nnnn (16 bit literal)
+    V_ADR,      // $nnnn or $nnnnnnnn (16 or 32 bit address)
     V_REG,      // %n (register)
     V_LBL,      // label, abcdef
+    V_LLO,      // lo word of label, #label
+    V_LHI,      // hi word of label, @label
+    V_IND,      // indirect register *n
 };
 
 extern enum VAL_TYPE get_type(char *value);

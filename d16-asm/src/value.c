@@ -5,15 +5,24 @@
 
 enum VAL_TYPE get_type(char *value) {
     switch (value[0]) {
-        case '*':
-            return V_ADR;
+        case '#':
+            if (('0' <= value[1] && '9' >= value[1]) || value[1] == '$' || value[1] == '\'')
+                return V_IMM;
+            else
+                return V_LLO;
+
+        case '@':
+            return V_LHI;
 
         case '%':
             return V_REG;
 
+        case '*':
+            return V_IND;
+
         default:
             if (('0' <= value[0] && '9' >= value[0]) || value[0] == '$' || value[0] == '\'')
-                return V_IMM;
+                return V_ADR;
             else
                 return V_LBL;
     }

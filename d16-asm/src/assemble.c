@@ -4,196 +4,218 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "asmerror.h"
 #include "instruction.h"
+#include "label.h"
 #include "macro.h"
+#include "utils.h"
 
-static bool add_character(char c, char **word, size_t *len) {
-    (*len)++;
-    char *tmp = realloc(*word, (*len + 1) * sizeof(char));
-    if (tmp == NULL) 
-        return false;
+static bool add_char(char **s, char c) {
+    size_t len = (*s == NULL) ? 0 : strlen(*s);
 
-    *word = tmp;
-    (*word)[*len - 1] = c;
-    (*word)[*len] = '\0';
-    return true;
-}
-
-static bool add_word(char *w, char ***line, size_t *len) {
-    (*len)++;
-    char **tmp = realloc(*line, (*len + 1) * sizeof(char *));
+    char *tmp = realloc(*s, len + 2);
     if (tmp == NULL)
         return false;
 
-    *line = tmp;
-    (*line)[*len - 1] = w;
-    (*line)[*len] = NULL;
+    *s = tmp;
+    (*s)[len] = c;
+    (*s)[len + 1] = '\0';
     return true;
 }
 
-uint16_t *assemble(const char *source, size_t len, size_t *words) {
+static bool add_arg(char *arg, char ***argv, size_t *argc) {
+    (*argc)++;
+    char **tmp = realloc(*argv, *argc * sizeof(char *));
+    if (tmp == NULL)
+        return false;
+
+    *argv = tmp;
+    (*argv)[*argc - 1] = arg;
+    return true;
+}
+
+bool assemble_line(struct ASM *env, char *line) {
+    char **argv = NULL;
+    size_t argc = 0;
+
+    char *arg = NULL;
+
+    if (!strcmp(line, ""))
+        return true;
+
+    for (char *c = line; *c; c++) {
+        switch (*c) {
+            case ' ':
+                if (arg != NULL)
+                    if (!add_arg(arg, &argv, &argc))
+                        goto nomem;
+                    
+                arg = NULL;
+                break;
+            
+            case ':':
+                if (argc != 0) {
+                    print_err(env, LABEL_ERROR, "Label may not contain a space", STARTOF(0), ENDOF(argc));
+                    goto cleanup;
+                }
+
+                if (!add_label(env, arg))
+                    goto nomem;
+                
+                free(arg);
+                arg = NULL;
+                break;
+
+            case ';':
+                while (*c != '\0') c++;
+                goto start_asm;
+
+            case '!':
+                if (argc != 0) {
+                    print_err(env, SYNTAX_ERROR, "Macro must be at the start of the line", STARTOF(0), ENDOF(argc));
+                }
+                while (*c != '\0' && *c != ';') {
+                    if (!add_char(&arg, *c))
+                        goto nomem;
+
+                    c++;
+                }
+                
+                if (!run_macro(arg, env))
+                    goto cleanup;
+
+                free(arg);
+                arg = NULL;
+                return true;
+
+            default:
+                if (!add_char(&arg, *c))
+                    goto nomem;
+                break;
+        }
+    }
+start_asm:
+    if (arg != NULL)
+        if (!add_arg(arg, &argv, &argc))
+            goto nomem;
+
+    arg = NULL;
+    if (argc > 0)
+        if (!asm_line(env, argv, argc))
+            goto cleanup;
+
+    for (size_t i = 0; i < argc; i++)
+        free(argv[i]);
+    free(argv);
+
+    return true;
+
+nomem:
+    internal_err("malloc failed...");
+
+cleanup:
+    if (arg != NULL)
+        free(arg);
+
+    for (size_t i = 0; i < argc; i++)
+        free(argv[i]);
+    free(argv);
+
+    return false;
+}
+
+uint16_t *assemble(char *filename, const char *source, size_t *words) {
    
     struct ASM env = { 
         .address=0x00000000, 
         .num_words=0, .words=NULL, 
         .num_labels=0, .labels=NULL,
         .num_placeholders=0, .tbc=NULL,
+        .file=filename, .lineno=0,
+        .cur_line=NULL,
     };
 
-    char **line = NULL;
-    size_t num_words = 0;
-    char *word = NULL;
-    size_t len_word = 0;
+    char *src, *cpy = strdup(source);
+    src = cpy;
+    char **lines = NULL;
+    size_t line_count = 0;
 
-    char *macro = NULL;
-    size_t len_macro = 0;
+    char *nl;
 
-    for (const char *c = source; *c && (c - source) <= len; c++) {
-        switch (*c) {
-            case '\n':
-                if (word != NULL)
-                    if (!add_word(word, &line, &num_words))
-                        goto nomem;
+    do {
+        nl = strchr(src, '\n');
+        if (nl != NULL)
+            *nl = '\0';    
 
-                if (line != NULL) {
-                    if (!asm_line(line, num_words, &env))
-                        goto cleanup;
-
-                    for (size_t i = 0; i < num_words; i++)
-                        free(line[i]);
-                    free(line);
-                }
-
-                line = NULL;
-                word = NULL;
-                num_words = 0;
-                len_word = 0;
-                break;
-
-            case ' ':
-                if (word == NULL)
-                    break;
-
-                if (!add_word(word, &line, &num_words))
-                    goto nomem;
-
-                word = NULL;
-                len_word = 0;
-                break;
-
-            case '!':
-                while (*c != '\n' && *c != ';' && *c != '\0') {
-                    if (!add_character(*c, &macro, &len_macro)) {
-                        free(macro);
-                        goto nomem;
-                    }
-                    c++;
-                }
-                
-                if (!run_macro(macro, &env)) {
-                    free(macro);
-                    goto cleanup;
-                }
-
-                free(macro);
-                macro = NULL;
-                len_macro = 0;
-
-                break;
-
-            case ';':
-                while (*c != '\n' && *c != '\0' && (c - source <= strlen(source))) c++;
-                c--;
-                break;
-
-            case ':':
-                if (num_words > 0) {
-                    fprintf(stderr, "Syntax Error: Label names may not contain spaces\n");
-                    goto cleanup;
-                } else if (len_word == 0) {
-                    fprintf(stderr, "Syntax Error: Empty label\n");
-                    goto cleanup;
-                }
-
-                if (!add_label(&env, word))
-                    goto nomem;
-
-                free(word);
-                word = NULL;
-                len_word = 0;
-
-                break;
-        
-            default:
-                if (!add_character(*c, &word, &len_word))
-                    goto nomem;
-                break;
-        }
-    }
-
-    if (word != NULL)
-        if (!add_word(word, &line, &num_words))
+        line_count++;
+        char **tmp = realloc(lines, line_count * sizeof(char *));
+        if (tmp == NULL)
             goto nomem;
 
-    if (line != NULL) {
-        if (!asm_line(line, num_words, &env))
-            goto cleanup;
+        lines = tmp;
+        lines[line_count - 1] = src;
 
-        for (size_t i = 0; i < num_words; i++)
-            free(line[i]);
-        free(line);
+        src = nl + 1;
+
+    } while (nl != NULL);
+
+
+    for (size_t l = 0; l < line_count; l++) {
+        env.lineno++;
+        env.cur_line = lines[l];
+
+        if (!assemble_line(&env, lines[l]))
+            goto cleanup;
     }
 
-    //resolve label placeholders using label table
-    uint32_t address;
     for (size_t i = 0; i < env.num_placeholders; i++) {
-        if (!get_label(&env, env.tbc[i]->label, &address)) {
-            fprintf(stderr, "Syntax Error: No such label: %s\n", env.tbc[i]->label);
-            goto cleanup;
+        uint32_t addr;
+        if (!get_label(&env, env.tbc[i]->label, &addr)) {
+            //env.lineno = env.tbc[i]->line;
+            //print_err(&env, LABEL_ERROR, "Unknown label");
+        } else {
+            switch (env.tbc[i]->opts) {
+                case LO_16:
+                    env.words[env.tbc[i]->address] = (uint16_t)(addr & 0x0000ffff);
+                    break;
+                case HI_16:
+                    env.words[env.tbc[i]->address] = (uint16_t)((addr & 0xffff0000) >> 16);
+                    break;
+                case BITS_32:
+                    env.words[env.tbc[i]->address] = (uint16_t)(addr & 0x0000ffff);
+                    env.words[env.tbc[i]->address + 1] = (uint16_t)((addr & 0xffff0000) >> 16);
+                    break;
+            }
         }
-
-        env.words[env.tbc[i]->address] = address & 0x0000ffff;
-        if (env.tbc[i]->bits == 32)
-            env.words[env.tbc[i]->address + 1] = (address & 0xffff0000) >> 16;
-
     }
 
-    for (size_t i = 0; i < env.num_labels; i++) {
-        free(env.labels[i]->label);
+    free(lines);
+    free(cpy);
+
+    for (size_t i = 0; i < env.num_labels; i++)
         free(env.labels[i]);
-    }
     free(env.labels);
 
-    for (size_t i = 0; i < env.num_placeholders; i++) {
-        free(env.tbc[i]->label);
+    for (size_t i = 0; i < env.num_placeholders; i++)
         free(env.tbc[i]);
-    }
     free(env.tbc);
 
     *words = env.num_words;
     return env.words;
 
 nomem:
-    fprintf(stderr, "malloc failed...\n");
+    internal_err("malloc failed...");
 
 cleanup:
-    if (line != NULL)
-        for (size_t i = 0; i < num_words; i++)
-            free(line[i]);
-    free(line);
-
-    free(env.words);
-
-    for (size_t i = 0; i < env.num_labels; i++) {
-        free(env.labels[i]->label);
+    free(lines);
+    free(cpy);
+    
+    for (size_t i = 0; i < env.num_labels; i++)
         free(env.labels[i]);
-    }
     free(env.labels);
 
-    for (size_t i = 0; i < env.num_placeholders; i++) {
-        free(env.tbc[i]->label);
+    for (size_t i = 0; i < env.num_placeholders; i++)
         free(env.tbc[i]);
-    }
     free(env.tbc);
 
     return NULL;

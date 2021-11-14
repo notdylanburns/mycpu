@@ -35,7 +35,7 @@ int main(int argc, char **argv) {
     fclose(src);
 
     size_t wc = 0;
-    uint16_t *words = assemble(cont, len, &wc);
+    uint16_t *words = assemble(argv[1], cont, &wc);
 
     if (words == NULL)
         return 1;

@@ -4,12 +4,18 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "asmerror.h"
+#include "address.h"
+#include "label.h"
+#include "parse.h"
+#include "utils.h"
 #include "value.h"
 
-struct Instruction *new_instruction(char *opcode, enum ADDR_MODE a) {
+struct Instruction *new_instruction(char *opcode, struct AddrMode a) {
     struct Instruction *i = malloc(sizeof(struct Instruction));
     i->opcode = opcode;
-    i->a = a;
+    i->a = TO_ADDR_INDEX(a.arg1, a.arg2);
+
     i->r1 = 0;
     i->r2 = 0;
     return i;
@@ -37,329 +43,193 @@ static uint16_t format(const char *o, uint8_t r1, uint8_t r2) {
     return n;
 }
 
-bool get_opcode(struct Instruction *inst, uint16_t *op) {
+bool get_opcode(struct Instruction *inst, uint16_t *op, size_t argc, struct ASM *env) {
     for (int i = 0; i < MATRIX_LEN; i++) {
         if (!strcmp(inst->opcode, MATRIX[i].N)) {
             if (MATRIX[i].M[inst->a].V) {
                 *op = (uint16_t)format(MATRIX[i].M[inst->a].X, inst->r1, inst->r2);
                 return true;
             } else {
-                fprintf(stderr, "Syntax Error: %s has no addressing mode: %s\n", MATRIX[i].N, MODES[inst->a]);
+                print_err(env, SYNTAX_ERROR, "Invalid addressing mode", STARTOF(1), ENDOF(argc - 1));
                 return false;
             }
         }
     }
-    fprintf(stderr, "Syntax Error: No such opcode: %s\n", inst->opcode);
+    print_err(env, SYNTAX_ERROR, "Invalid opcode", STARTOF(0), ENDOF(0));
     return false;
 }
 
-static bool parse_imm(struct ASM *env, uint16_t *word, char *w) {
-    (void)env;
-    switch (get_type(w)) {
-        case V_IMM:
-            if (!value16(w, word)) {
-                fprintf(stderr, "Syntax Error: Invalid constant: %s\n", w);
-                return false;
-            }
-            return true;
-        
-        default:
-            fprintf(stderr, "Syntax Error: %s expected immediate argument\n", w);
-            return false;
-    }
-}
-
-static bool parse_a16(struct ASM *env, uint16_t *word, char *w) {
-    switch (get_type(w)) {
-        case V_ADR:
-            if (!value16(w + 1, word)) {
-                fprintf(stderr, "Syntax Error: Invalid address: %s\n", w);
-                return false;
-            }
-            return true;
-
-        case V_LBL:
-            uint32_t dword = 0;
-            if (!get_label(env, w, &dword)) {
-                if (!add_label_ph(env, w, 16)) {
-                    fprintf(stderr, "malloc failed...\n");
-                    return false;
-                }
-            } else
-                *word = (uint16_t)(dword & 0x0000ffff);
-            return true;
-        
-        default:
-            fprintf(stderr, "Syntax Error: %s expected address argument\n", w);
-            return false;
-    }
-}
-
-static bool parse_a32(struct ASM *env, uint32_t *dword, char *w) {
-    switch (get_type(w)) {
-        case V_ADR:
-            if (!value32(w + 1, dword)) {
-                fprintf(stderr, "Syntax Error: Invalid address: %s\n", w);
-                return false;
-            }
-            return true;
-
-        case V_LBL:
-            if (!get_label(env, w, dword))
-                if (!add_label_ph(env, w, 32)) {
-                    fprintf(stderr, "malloc failed...\n");
-                    return false;
-                }
-            return true;
-        
-        default:
-            fprintf(stderr, "Syntax Error: %s expected address argument\n", w);
-            return false;
-    }
-}
-
-bool asm_line(char **line, size_t linesize, struct ASM *env) {
-    struct Instruction *i = get_instruction(line, linesize);
+bool asm_line(struct ASM *env, char **argv, size_t argc) {
+    struct Instruction *i = get_instruction(env, argv, argc);
     if (i == NULL)
         goto cleanup;
 
     uint16_t op = 0;
-    if (!get_opcode(i, &op))
+    if (!get_opcode(i, &op, argc, env))
         goto cleanup;
 
     if (!add_words(env, &op, 1))
         goto nomem;
-    
-    linesize--;
-    line++;
+
+    enum ADDR_MODE a1 = (i->a / NUM_ADDR_MODES), 
+                   a2 = (i->a % NUM_ADDR_MODES);
+
+    destroy_instruction(i);
+    i = NULL;
 
     uint16_t word = 0;
     uint32_t dword = 0;
     uint16_t a[2] = {0, 0};
-    switch (i->a) {
+    switch (a1) {
         case IMM:
-            if (!parse_imm(env, &word, line[0]))
-                goto cleanup;
+            if (!parse_imm(env, &word, argv[1], 1))
+                return false;
             if (!add_words(env, &word, 1))
                 goto nomem;
-            free(i);
-            return true;
-
+            break;
+        
         case A16:
-        case A16_REG:
-            if (!parse_a16(env, &word, line[0]))
-                goto cleanup;
+            if (!parse_a16(env, &word, argv[1], 1))
+                return false;
             if (!add_words(env, &word, 1))
                 goto nomem;
-            free(i);
-            return true;
+            break;
 
         case A32:
-        case A32_REG:
-            if (!parse_a32(env, &dword, line[0]))
-                goto cleanup;
-            a[0] = (uint16_t)((dword & 0xffff0000) >> 16); 
+            if (!parse_a32(env, &dword, argv[1], 1))
+                return false;
+            a[0] = (uint16_t)((dword & 0xffff0000) >> 16);
             a[1] = (uint16_t)(dword & 0x0000ffff);
             if (!add_words(env, a, 2))
                 goto nomem;
-            free(i);
-            return true;
+            break;
 
-        case A16_IMM:
-            if (!parse_a16(env, &word, line[0]))
-                goto cleanup;
-            if (!add_words(env, &word, 1))
-                goto nomem;
-            if (!parse_imm(env, &word, line[1]))
-                goto cleanup;
-            if (!add_words(env, &word, 1))
-                goto nomem;
-            free(i);
-            return true;
-
-        case A32_IMM:
-            if (!parse_a32(env, &dword, line[0]))
-                goto cleanup;
-            a[0] = (uint16_t)((dword & 0xffff0000) >> 16); 
-            a[1] = (uint16_t)(dword & 0x0000ffff);
-            if (!add_words(env, a, 2))
-                goto nomem;
-            if (!parse_imm(env, &word, line[1]))
-                goto cleanup;
-            if (!add_words(env, &word, 1))
-                goto nomem;
-            free(i);
-            return true;
-
-        case REG_IMM:
-            if (!parse_imm(env, &word, line[1]))
-                goto cleanup;
-            if (!add_words(env, &word, 1))
-                goto nomem;
-            free(i);
-            return true;
-
-        case REG_A16:
-            if (!parse_a16(env, &word, line[1]))
-                goto cleanup;
-            if (!add_words(env, &word, 1))
-                goto nomem;
-            free(i);
-            return true;
-        
-        case REG_A32:
-            if (!parse_a32(env, &dword, line[1]))
-                goto cleanup;
-            a[0] = (uint16_t)((dword & 0xffff0000) >> 16); 
-            a[1] = (uint16_t)(dword & 0x0000ffff);
-            if (!add_words(env, a, 2))
-                goto nomem;
-            free(i);
-            return true;
-
-        default: // imp, reg, reg_reg
-            free(i);
-            return true;
+        case IMP:
+            if (a2 != IMP) {
+                internal_err("a1 is IMP, but a2 is not");
+                return false;
+            }
+        default: // imp, reg, ind
+            break;
     }
 
+    switch (a2) {
+        case IMM:
+            if (!parse_imm(env, &word, argv[2], 2))
+                return false;
+            if (!add_words(env, &word, 1))
+                goto nomem;
+            break;
+        
+        case A16:
+            if (!parse_a16(env, &word, argv[2], 2))
+                return false;
+            if (!add_words(env, &word, 1))
+                goto nomem;
+            break;
+
+        case A32:
+            if (!parse_a32(env, &dword, argv[2], 2))
+                return false;
+            a[0] = (uint16_t)((dword & 0xffff0000) >> 16);
+            a[1] = (uint16_t)(dword & 0x0000ffff);
+            if (!add_words(env, a, 2))
+                goto nomem;
+            break;
+
+        default: // imp, reg, ind
+            break;
+    }
+
+    return true;
+
 nomem:
-    fprintf(stderr, "malloc failed...\n");
+    internal_err("malloc failed...");
 
 cleanup:
-    free(i);
+    if (i != NULL)
+        destroy_instruction(i);
 
     return false;
 }
 
-struct Instruction *get_instruction(char **line, size_t linesize) {
-    enum ADDR_MODE a;
-    uint8_t r1 = 0, r2 = 0;
+struct Instruction *get_instruction(struct ASM *env, char **line, size_t linesize) {
     if (linesize == 0) {
-        fprintf(stderr, "Empty line being parsed...\n");
-    };
+        internal_err("Empty line being parsed...");
+        return NULL;
+    }
+
+#define MAX_ARGS 2
+    uint8_t r_args[MAX_ARGS];
+    size_t num_regs = 0;
+    enum ADDR_MODE a[MAX_ARGS] = {IMP, IMP};
     char *opcode = line[0];
     if (linesize == 1) { // imp
-        a = IMP;
-    } else if (linesize == 2) { // imm, a16, a32, reg
-        switch (get_type(line[1])) {
-            case V_IMM:
-                a = IMM;
-                break;
-            case V_LBL:
-                a = A32;
-                break;
-            case V_ADR:
-                uint32_t addr = 0;
-                if (!value32(line[1] + 1, &addr)) {
-                    fprintf(stderr, "Syntax Error: Invalid address: %s\n", line[1]);
-                    return NULL;
-                }
-                if ((addr & 0x0000ffff) == addr) 
-                    a = A16;
-                else
-                    a = A32; 
-                break;
-            case V_REG:
-                if (strlen(line[1]) != 2 || !get_register(line[1][1], &r1)) {
-                    fprintf(stderr, "Syntax Error: Invalid register: %s\n", line[1]);
-                    return NULL;
-                }
-                a = REG;
-                break;
-        }
-    } else if (linesize == 3) {
-        enum VAL_TYPE t = get_type(line[2]);
-        switch (get_type(line[1])) {
-            case V_IMM:
-                fprintf(stderr, "Syntax Error: Invalid combination of addressing modes: %s and %s\n", line[1], line[2]);
-                return NULL;
-            case V_LBL:
-                if (t == V_REG) {
-                    if (strlen(line[2]) != 2 || !get_register(line[2][1], &r1)) {
-                        fprintf(stderr, "Syntax Error: Invalid register: %s\n", line[2]);
-                        return NULL;
-                    }
-                    a = A32_REG;
-                } else if (t == V_IMM) {
-                    a = A32_IMM;
-                } else {
-                    fprintf(stderr, "Syntax Error: Invalid combination of addressing modes: %s and %s\n", line[1], line[2]);
-                    return NULL;
-                }
-                break;
-            case V_ADR:
-                uint32_t addr = 0;
-                if (!value32(line[1] + 1, &addr)) {
-                    fprintf(stderr, "Syntax Error: Invalid address: %s\n", line[1]);
-                    return NULL;
-                }
-                if ((addr & 0x0000ffff) == addr) 
-                    if (t == V_REG) {
-                        if (strlen(line[2]) != 2 || !get_register(line[2][1], &r1)) {
-                            fprintf(stderr, "Syntax Error: Invalid register: %s\n", line[2]);
-                            return NULL;
-                        }
-                        a = A16_REG;
-                    } else if (t == V_IMM) {
-                        a = A16_IMM;
-                    } else {
-                        fprintf(stderr, "Syntax Error: Invalid combination of addressing modes: %s and %s\n", line[1], line[2]);
-                        return NULL;
-                    }
-                else
-                    if (t == V_REG) {
-                        if (strlen(line[2]) != 2 || !get_register(line[2][1], &r1)) {
-                            fprintf(stderr, "Syntax Error: Invalid register: %s\n", line[2]);
-                            return NULL;
-                        }
-                        a = A32_REG;
-                    } else if (t == V_IMM) {
-                        a = A32_IMM;
-                    } else {
-                        fprintf(stderr, "Syntax Error: Invalid combination of addressing modes: %s and %s\n", line[1], line[2]);
-                        return NULL;
-                    }
-                break;
-            case V_REG:
-                if (strlen(line[1]) != 2 || !get_register(line[1][1], &r1)) {
-                    fprintf(stderr, "Syntax Error: Invalid register: %s\n", line[1]);
-                    return NULL;
-                }
-                if (t == V_REG) {
-                    if (strlen(line[2]) != 2 || !get_register(line[2][1], &r2)) {
-                        fprintf(stderr, "Syntax Error: Invalid register: %s\n", line[2]);
-                        return NULL;
-                    }
-                    a = REG_REG;
-                } else if (t == V_IMM)
-                    a = REG_IMM;
-                else if (t == V_ADR) {
-                    uint32_t addr = 0;
-                    if (!value32(line[2] + 1, &addr)) {
-                        fprintf(stderr, "Syntax Error: Invalid address: %s\n", line[2]);
+        a[0] = IMP;
+        a[1] = IMP;
+    } else if (linesize > (MAX_ARGS + 1)) { 
+        print_err(env, SYNTAX_ERROR, "Too many arguments", STARTOF(MAX_ARGS + 1), ENDOF(linesize - 1));
+        return NULL;
+    } else {
+#undef MAX_ARGS
+        uint32_t addr = 0;
+        for (size_t i = 1; i < linesize; i++) {
+            switch (get_type(line[i])) {
+                case V_IMM:
+                    a[i - 1] = IMM;
+                    break;
+                
+                case V_ADR:
+                    if (!value32(line[i], &addr)) {
+                        print_err(env, SYNTAX_ERROR, "Invalid address literal", STARTOF(i), ENDOF(i));
                         return NULL;
                     }
                     if ((addr & 0x0000ffff) == addr) 
-                        a = REG_A16;
+                        a[i - 1] = A16;
                     else
-                        a = REG_A32;
-                } else {
-                    fprintf(stderr, "Syntax Error: Invalid combination of addressing modes: %s and %s\n", line[1], line[2]);
-                    return NULL;
-                }
-                break;
+                        a[i - 1] = A32; 
+                    break;
+
+                case V_REG:
+                    if (strlen(line[i]) != 2 || !get_register(line[i][1], r_args + (num_regs++))) {
+                        print_err(env, SYNTAX_ERROR, "Invalid register literal", STARTOF(i), ENDOF(i));
+                        return NULL;
+                    }
+                    a[i - 1] = REG;
+                    break;
+
+                case V_LBL:
+                    if (!get_label(env, line[i], &addr))
+                        if ((addr & 0x0000ffff) == addr) 
+                            a[i - 1] = A16;
+                        else
+                            a[i - 1] = A32; 
+                    else
+                        a[i - 1] = A32;
+                    break;
+
+                case V_LLO:
+                case V_LHI:
+                    a[i - 1] = IMM;
+                    break;
+
+                case V_IND:
+                    if (strlen(line[i]) != 2 || !get_register(line[i][1], r_args + (num_regs++))) {
+                        print_err(env, SYNTAX_ERROR, "Invalid indirect register literal", STARTOF(i), ENDOF(i));
+                        return NULL;
+                    }
+                    a[i - 1] = IND;
+                    break;
+            }
         }
-    } else {
-        fprintf(stderr, "Syntax Error: Too many arguments for opcode: %s\n", line[0]);
-        return NULL;
     }
 
-    struct Instruction *i = new_instruction(opcode, a);
+    struct Instruction *i = new_instruction(opcode, (struct AddrMode){ .arg1=a[0], .arg2=a[1] });
     if (i == NULL) {
-        fprintf(stderr, "malloc failed...\n");
+        internal_err("malloc failed...");
         return NULL;
     }
 
-    i->r1 = r1; i->r2 = r2;
+    i->r1 = r_args[0]; i->r2 = r_args[1];
     return i;
 }

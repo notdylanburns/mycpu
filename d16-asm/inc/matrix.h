@@ -5,14 +5,14 @@
 
 #include "address.h"
 
-struct AddrMode {
+struct _AddrMode {
     const char *X;
     bool V;
 };
 
 struct Opcode {
     const char *N;
-    struct AddrMode M[ADDR_MODES];
+    struct _AddrMode M[NUM_ADDR_MODES * NUM_ADDR_MODES];
 };
 
 extern const int MATRIX_LEN;

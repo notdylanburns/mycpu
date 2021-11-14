@@ -6,6 +6,6 @@
 
 #include "asmenv.h"
 
-extern uint16_t *assemble(const char *source, size_t len, size_t *words);
+extern uint16_t *assemble(char *filename, const char *source, size_t *words);
 
 #endif

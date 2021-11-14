@@ -4,39 +4,22 @@ import sys
 template = """#include "matrix.h"\nconst int MATRIX_LEN = {};\n\nconst struct Opcode MATRIX[] = """
 
 ocm = {}
-NUM_MODES = 16
+NUM_MODES = 36
 
 def get_am(o1, o2):
     ams = {
-        "-": {
-            "-": 0,
-        },
-        "imm": {
-            "-": 1,
-        },
-        "a16": {
-            "-": 2,
-            "imm": 5,
-            "%R": 6
-        },
-        "a32": {
-            "-": 3,
-            "imm": 7,
-            "%R": 8,
-        },
-        "%R": {
-            "-": 4,
-            "imm": 9,
-            "a16": 10,
-            "a32": 11
-        },
-        "%X": {
-            "%Y": 12
-        },
+        "-": 0,
+        "imm": 1,
+        "a16": 2,
+        "a32": 3,
+        "%R": 4,
+        "%X": 4,
+        "%Y": 4,
+        "*R": 5,
     }
 
     try:
-        return ams[o1][o2]
+        return (ams[o1] * 6) + ams[o2]
     except KeyError:
         return -1
 
