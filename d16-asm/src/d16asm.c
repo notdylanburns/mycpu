@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "asmerror.h"
+#include "asminclude.h"
 #include "assemble.h"
 #include "endianness.h"
 
@@ -28,6 +30,7 @@ int main(int argc, char **argv) {
     cont[len] = '\0';
 
     if (fread(cont, 1, len, src) != len) {
+        fclose(src);
         fprintf(stderr, "Error while reading '%s'\n", argv[1]);
         return 1;
     }
@@ -48,6 +51,7 @@ int main(int argc, char **argv) {
 
     if (get_endianness() == BE) {
         if (fwrite(words, 2, wc, output) != wc) {
+            fclose(output);
             fprintf(stderr, "Error while writing '%s'\n", argv[2]);
             goto cleanup;
         }
@@ -59,6 +63,7 @@ int main(int argc, char **argv) {
             bytes[(2 * i) + 1] = w & 0x00ff;
         }
         if (fwrite(bytes, 1, 2 * wc, output) != (2 * wc)) {
+            fclose(output);
             fprintf(stderr, "Error while writing '%s'\n", argv[2]);
             goto cleanup;
         }

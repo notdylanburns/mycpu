@@ -9,6 +9,7 @@ enum ERROR_TYPE {
     MACRO_ERROR,
     SYNTAX_ERROR,
     LABEL_ERROR,
+    INCLUDE_ERROR,
 };
 
 extern long start_of(char *line, size_t w);

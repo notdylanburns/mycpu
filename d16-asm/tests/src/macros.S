@@ -7,7 +7,8 @@
     !word $2c20                 ; ,  
     !word '0111011101101111     ; w o
     !word 29292                 ; r l
-    
-    !ddw $64210000              ; d !
 
-    !str b"/home/mk411/mycpu/d16-asm/test.d16"
+    !ddw $64210000              ; d !
+    
+    !inc "/home/mk41/mycpu/d16-asm/test.S"
+    !bstr "/home/mk41/mycpu/d16-asm/test.d16 hello balls fart deez"

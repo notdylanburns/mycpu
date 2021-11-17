@@ -1,6 +1,9 @@
+#include "asmenv.h"
 #include "label.h"
 
 #include <string.h>
+
+struct ASM;
 
 bool add_label(struct ASM *env, char *l) {
     struct Label *label = malloc(sizeof(struct Label));

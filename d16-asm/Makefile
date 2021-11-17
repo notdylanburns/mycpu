@@ -34,7 +34,7 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(OBJ_DIR)
 $(OBJ_DIR):
 	mkdir $@
 
-tests: $(TARGET)
+test: FORCE
 	make -C $(TST_DIR)
 
 clean:
@@ -42,5 +42,11 @@ clean:
 
 remove: clean
 	rm -f $(TARGET)
+
+install: /usr/local/bin/$(TARGET)
+/usr/local/bin/$(TARGET): $(TARGET)
+	cp $< $@
+
+FORCE: ;
 
 .PHONY: all

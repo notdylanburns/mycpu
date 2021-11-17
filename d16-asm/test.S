@@ -9,8 +9,10 @@ data:
     !dw 0
     !ddw $deadbeef
 
-!ddw irq_vector_table
+    !ddw irq_vector_table
 
+my_str:
+    !str "deez nutz"
 
 ; Interrupt Handlers
 

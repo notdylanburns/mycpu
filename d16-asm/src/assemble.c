@@ -5,34 +5,11 @@
 #include <string.h>
 
 #include "asmerror.h"
+#include "asminclude.h"
 #include "instruction.h"
 #include "label.h"
 #include "macro.h"
 #include "utils.h"
-
-static bool add_char(char **s, char c) {
-    size_t len = (*s == NULL) ? 0 : strlen(*s);
-
-    char *tmp = realloc(*s, len + 2);
-    if (tmp == NULL)
-        return false;
-
-    *s = tmp;
-    (*s)[len] = c;
-    (*s)[len + 1] = '\0';
-    return true;
-}
-
-static bool add_arg(char *arg, char ***argv, size_t *argc) {
-    (*argc)++;
-    char **tmp = realloc(*argv, *argc * sizeof(char *));
-    if (tmp == NULL)
-        return false;
-
-    *argv = tmp;
-    (*argv)[*argc - 1] = arg;
-    return true;
-}
 
 bool assemble_line(struct ASM *env, char *line) {
     char **argv = NULL;
@@ -125,20 +102,26 @@ cleanup:
 }
 
 uint16_t *assemble(char *filename, const char *source, size_t *words) {
-   
+    struct IncludedBy *by = new_include(filename, 0, 0);
+    if (by == NULL) {
+        internal_err("malloc failed...");
+        return NULL;
+    }
+    
     struct ASM env = { 
         .address=0x00000000, 
         .num_words=0, .words=NULL, 
         .num_labels=0, .labels=NULL,
         .num_placeholders=0, .tbc=NULL,
-        .file=filename, .lineno=0,
-        .cur_line=NULL,
+        .lines=NULL, .cur_line=NULL,
+        .by=by, .abs_line=0,
     };
 
-    char *src, *cpy = strdup(source);
+    char *dup, *src, *cpy = strdup(source);
+    if (cpy == NULL)
+        goto nomem;
+
     src = cpy;
-    char **lines = NULL;
-    size_t line_count = 0;
 
     char *nl;
 
@@ -147,25 +130,40 @@ uint16_t *assemble(char *filename, const char *source, size_t *words) {
         if (nl != NULL)
             *nl = '\0';    
 
-        line_count++;
-        char **tmp = realloc(lines, line_count * sizeof(char *));
+        env.num_lines++;
+        char **tmp = realloc(env.lines, env.num_lines * sizeof(char *));
         if (tmp == NULL)
             goto nomem;
 
-        lines = tmp;
-        lines[line_count - 1] = src;
+        env.lines = tmp;
+
+        dup = strdup(src);
+        if (dup == NULL)
+            goto nomem;
+
+        env.lines[env.num_lines - 1] = dup;
 
         src = nl + 1;
 
     } while (nl != NULL);
 
+    env.by->remaining = env.num_lines;
 
-    for (size_t l = 0; l < line_count; l++) {
-        env.lineno++;
-        env.cur_line = lines[l];
+    for (env.abs_line = 0; env.abs_line < env.num_lines; env.abs_line++) {
+        env.by->line++;
+        env.by->remaining--;
 
-        if (!assemble_line(&env, lines[l]))
+        env.cur_line = env.lines[env.abs_line];
+
+        if (!assemble_line(&env, env.cur_line))
             goto cleanup;
+
+        while (env.by != NULL && env.by->remaining == 0) {
+            struct IncludedBy *parent = env.by->parent;
+            free(env.by->fp);
+            free(env.by);
+            env.by = parent;
+        }
     }
 
     for (size_t i = 0; i < env.num_placeholders; i++) {
@@ -189,8 +187,12 @@ uint16_t *assemble(char *filename, const char *source, size_t *words) {
         }
     }
 
-    free(lines);
+    for (size_t i = 0; i < env.num_lines; i++)
+        free(env.lines[i]);
+    free(env.lines);
     free(cpy);
+
+    destroy_include(env.by);
 
     for (size_t i = 0; i < env.num_labels; i++) {
         free(env.labels[i]->label);
@@ -211,8 +213,12 @@ nomem:
     internal_err("malloc failed...");
 
 cleanup:
-    free(lines);
+    for (size_t i = 0; i < env.num_lines; i++)
+        free(env.lines[i]);
+    free(env.lines);
     free(cpy);
+
+    destroy_include(env.by);
 
     for (size_t i = 0; i < env.num_labels; i++) {
         free(env.labels[i]->label);

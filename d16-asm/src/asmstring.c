@@ -2,26 +2,18 @@
 
 #include <string.h>
 
-bool word_len(char *value, size_t *len) {
-    if (value[strlen(value) - 1] != '"') // is last character "
+bool word_len(char *value, size_t *len, enum STR_TYPE t) {
+    if (value[0] != '"' || value[strlen(value) - 1] != '"') // is surrounded by ""
         return false; 
 
-    switch (value[0]) {
-        case 'w':
-            if (value[1] != '"')
-                return false;
-            value++;
-
-        case '"':   // wide string default
+    switch (t) {
+        case STR_WIDE:
             value++;
             *len = strlen(value);
             break;
 
-        case 'b':
-            if (value[1] != '"')
-                return false;
-
-            value += 2;
+        case STR_BYTE:
+            value++;
             size_t l = strlen(value);
             *len = (l & 1) ? (l / 2) + 1 : (l / 2);
             break;
@@ -33,19 +25,14 @@ bool word_len(char *value, size_t *len) {
     return true;
 }
 
-bool strval(char *value, uint16_t *v) {
-    if (value[strlen(value) - 1] != '"') // is last character "
+bool strval(char *value, uint16_t *v, enum STR_TYPE t) {
+    if (value[0] != '"' || value[strlen(value) - 1] != '"') // is surrounded by ""
         return false; 
 
+    value++;
     size_t i;
-    switch (value[0]) {
-        case 'w':
-            value++;
-            if (value[0] != '"')
-                return false;
-        case '"':   // wide string default
-            value++;
-
+    switch (t) {
+        case STR_WIDE:
             for (i = 0; i < strlen(value) - 1; i++) {
                 v[i] = 0x0000 | (uint8_t)value[i];
             }
@@ -54,12 +41,7 @@ bool strval(char *value, uint16_t *v) {
 
             return true;
 
-        case 'b':
-            if (value[1] != '"')
-                return false;
-
-            value += 2;
-
+        case STR_BYTE:
             bool parity = false;
             uint8_t prev = 0;
             for (i = 0; i < strlen(value) - 1; i++) {
@@ -81,4 +63,15 @@ bool strval(char *value, uint16_t *v) {
         default:
             return false;
     }
+}
+
+bool strraw(char *value, char **v) {
+    size_t final = strlen(value) - 1;
+    if (value[0] != '"' || value[final] != '"')
+        return false; 
+
+    *v = value + 1;
+    value[final] = '\0';
+
+    return true;
 }

@@ -2,10 +2,14 @@
 
 #include <stdio.h>
 
+#include "asmenv.h"
+
 #include "asmerror.h"
 #include "label.h"
 #include "value.h"
 #include "utils.h"
+
+struct ASM;
 
 bool parse_imm(struct ASM *env, uint16_t *word, char *w, size_t index) {
     uint32_t dword = 0;
@@ -19,7 +23,7 @@ bool parse_imm(struct ASM *env, uint16_t *word, char *w, size_t index) {
 
         case V_LLO:
             if (!get_label(env, w + 1, &dword)) {
-                if (!add_label_ph(env, w + 1, env->lineno, index, LO_16)) {
+                if (!add_label_ph(env, w + 1, env->by->line, index, LO_16)) {
                     internal_err("malloc failed...");
                     return false;
                 }
@@ -29,7 +33,7 @@ bool parse_imm(struct ASM *env, uint16_t *word, char *w, size_t index) {
 
         case V_LHI:
             if (!get_label(env, w + 1, &dword)) {
-                if (!add_label_ph(env, w + 1, env->lineno, index, HI_16)) {
+                if (!add_label_ph(env, w + 1, env->by->line, index, HI_16)) {
                     internal_err("malloc failed...");
                     return false;
                 }
@@ -55,7 +59,7 @@ bool parse_a16(struct ASM *env, uint16_t *word, char *w, size_t index) {
         case V_LBL:
             uint32_t dword;
             if (!get_label(env, w, &dword)) {
-                if (!add_label_ph(env, w, env->lineno, index, LO_16)) {
+                if (!add_label_ph(env, w, env->by->line, index, LO_16)) {
                     internal_err("malloc failed...");
                     return false;
                 }
@@ -80,7 +84,7 @@ bool parse_a32(struct ASM *env, uint32_t *dword, char *w, size_t index) {
 
         case V_LBL:
             if (!get_label(env, w, dword))
-                if (!add_label_ph(env, w, env->lineno, index, BITS_32)) {
+                if (!add_label_ph(env, w, env->by->line, index, BITS_32)) {
                     internal_err("malloc failed...");
                     return false;
                 }
