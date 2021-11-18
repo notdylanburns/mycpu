@@ -66,5 +66,17 @@ void print_err(struct ASM *env, enum ERROR_TYPE t, char *msg, size_t estart, siz
 }
 
 void internal_err(char *msg) {
-    fprintf(stderr, "\033[1;37mInternal Error: \033[1;31m%s\033[0;37m\n", msg) ;
+    fprintf(stderr, "\033[1;37mInternal Error: \033[1;31m%s\033[0;37m\n", msg);
+}
+
+void fatal_err(char *fmt, ...) {
+    fprintf(stderr, "\033[1;37md16asm: \033[1;31m");
+    
+    va_list arg;
+    va_start(arg, fmt);
+
+    vfprintf(stderr, fmt, arg);
+    va_end(arg);
+
+    fprintf(stderr, "\033[0;37m\n");
 }

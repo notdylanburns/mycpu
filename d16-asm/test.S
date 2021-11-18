@@ -9,6 +9,7 @@ data:
     !dw 0
     !ddw $deadbeef
 
+redfine_me:
     !ddw irq_vector_table
 
 my_str:

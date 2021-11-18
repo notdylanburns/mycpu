@@ -9,6 +9,9 @@
     !word 29292                 ; r l
 
     !ddw $64210000              ; d !
+
+redfine_me:
+    !str "hello"
     
     !inc "/home/mk41/mycpu/d16-asm/test.S"
     !bstr "/home/mk41/mycpu/d16-asm/test.d16 hello balls fart deez"

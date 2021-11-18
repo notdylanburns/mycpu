@@ -9,16 +9,16 @@
 
 int main(int argc, char **argv) {
     if (argc < 2) {
-        fprintf(stderr, "No input file specified...\n");
+        fatal_err("No input file specified...");
         return 1;
     } else if (argc < 3) {
-        fprintf(stderr, "No output file specified...\n");
+        fatal_err("No output file specified...");
         return 1;
     }
 
     FILE *src = fopen(argv[1], "rb");
     if (src == NULL) {
-        fprintf(stderr, "No such file '%s'\n", argv[1]);
+        fatal_err("No such file '%s'", argv[1]);
         return 1;
     }
 
@@ -31,7 +31,7 @@ int main(int argc, char **argv) {
 
     if (fread(cont, 1, len, src) != len) {
         fclose(src);
-        fprintf(stderr, "Error while reading '%s'\n", argv[1]);
+        fatal_err("Error while reading '%s'\n", argv[1]);
         return 1;
     }
 
@@ -45,14 +45,14 @@ int main(int argc, char **argv) {
 
     FILE *output = fopen(argv[2], "wb+");
     if (output == NULL) {
-        fprintf(stderr, "No such file '%s'\n", argv[2]);
+        fatal_err("No such file '%s'\n", argv[2]);
         goto cleanup;
     }
 
     if (get_endianness() == BE) {
         if (fwrite(words, 2, wc, output) != wc) {
             fclose(output);
-            fprintf(stderr, "Error while writing '%s'\n", argv[2]);
+            fatal_err("Error while writing '%s'\n", argv[2]);
             goto cleanup;
         }
     } else {
@@ -64,7 +64,7 @@ int main(int argc, char **argv) {
         }
         if (fwrite(bytes, 1, 2 * wc, output) != (2 * wc)) {
             fclose(output);
-            fprintf(stderr, "Error while writing '%s'\n", argv[2]);
+            fatal_err("Error while writing '%s'\n", argv[2]);
             goto cleanup;
         }
     }

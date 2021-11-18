@@ -100,42 +100,6 @@ static bool _macro_ddw(struct ASM *env, size_t argc, char **argv) {
     return true;
 }
 
-/*static bool _macro_str(struct ASM *env, size_t argc, char **argv) {
-    if (argc < 2) {
-        print_err(env, MACRO_ERROR, "Too few arguments", STARTOF(0), ENDOF(argc - 1));
-        return false;
-    } else if (argc > 2) {
-        print_err(env, MACRO_ERROR, "Too many arguments", STARTOF(2), ENDOF(argc - 1));
-        return false;
-    }
-
-    if (get_type(argv[1]) == V_STR) {
-        size_t len;
-        if (!word_len(argv[1], &len)) {
-            print_err(env, MACRO_ERROR, "Invalid string literal", STARTOF(1), ENDOF(1));
-            return false;
-        }
-
-        uint16_t words[len];
-
-        if (!strval(argv[1], words)) {
-            print_err(env, MACRO_ERROR, "Invalid string literal", STARTOF(1), ENDOF(1));
-            return false;
-        }
-
-        if (!add_words(env, words, len)) {
-            internal_err("malloc failed...");
-            return false;
-        }
-    
-    } else {
-        print_err(env, MACRO_ERROR, "Expected string literal", STARTOF(1), ENDOF(1));
-        return false;
-    }
-
-    return true;
-}*/
-
 static bool _macro_wstr(struct ASM *env, size_t argc, char **argv) {
     if (argc < 2) {
         print_err(env, MACRO_ERROR, "Too few arguments", STARTOF(0), ENDOF(argc - 1));
@@ -285,6 +249,7 @@ static bool _macro_inc(struct ASM *env, size_t argc, char **argv) {
     if (!add_lines(env, lines, num_lines)) 
         goto nomem;
 
+    free(lines);
     free(cpy);
     return true;
 
@@ -298,6 +263,59 @@ cleanup:
     free(cpy);
 
     return false;
+}
+
+static bool _macro_embed(struct ASM *env, size_t argc, char **argv) {
+    if (argc < 2) {
+        print_err(env, MACRO_ERROR, "Too few arguments", STARTOF(0), ENDOF(argc - 1));
+        return false;
+    } else if (argc > 2) {
+        print_err(env, MACRO_ERROR, "Too many arguments", STARTOF(2), ENDOF(argc - 1));
+        return false;
+    }
+
+    char *fp;
+
+    if (!strraw(argv[1], &fp)) {
+        print_err(env, MACRO_ERROR, "Expected raw string literal", STARTOF(1), ENDOF(1));
+        return false;
+    }
+
+    FILE *f = fopen(fp, "rb");
+    if (f == NULL) {
+        print_err(env, INCLUDE_ERROR, "No such file", STARTOF(1), ENDOF(1));
+        return false;
+    }
+
+    fseek(f, 0, SEEK_END);
+    long len = ftell(f);
+    rewind(f);
+
+    uint8_t buf[len];
+
+    if (fread(buf, 1, len, f) != len) {
+        fclose(f);
+        internal_err("Error reading file...");
+        return false;
+    }
+    fclose(f);
+
+    size_t wordlen = (len / 2) + (len & 1);
+    uint16_t words[wordlen];
+    bool step = false;
+    uint8_t hi_byte = 0;
+    for (size_t i = 0; i < len; i++)
+        if (step)
+            words[i / 2] = (hi_byte << 8) | buf[i];
+        else
+            hi_byte = buf[i];
+
+    if (!add_words(env, words, wordlen)) {
+        internal_err("malloc failed...");
+        return false;
+    }
+
+    return true;
 }
 
 struct MACRO {
@@ -316,6 +334,7 @@ static const struct MACRO *MACROS[] = {
     &(struct MACRO){ "!bstr"        , &_macro_bstr      },
     &(struct MACRO){ "!inc"         , &_macro_inc       },
     &(struct MACRO){ "!include"     , &_macro_inc       },
+    &(struct MACRO){ "!embed"       , &_macro_embed     },
     NULL,
 };
 

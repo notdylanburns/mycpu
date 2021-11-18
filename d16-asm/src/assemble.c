@@ -36,8 +36,14 @@ bool assemble_line(struct ASM *env, char *line) {
                     goto cleanup;
                 }
 
-                if (!add_label(env, arg))
-                    goto nomem;
+                uint32_t a;
+                if (!get_label(env, arg, &a)) {
+                    if (!add_label(env, arg))
+                        goto nomem;
+                } else {
+                    print_err(env, LABEL_ERROR, "Redefinition of label", STARTOF(0), ENDOF(0));
+                    goto cleanup;
+                }
                 
                 free(arg);
                 arg = NULL;
@@ -169,8 +175,9 @@ uint16_t *assemble(char *filename, const char *source, size_t *words) {
     for (size_t i = 0; i < env.num_placeholders; i++) {
         uint32_t addr;
         if (!get_label(&env, env.tbc[i]->label, &addr)) {
-            //env.lineno = env.tbc[i]->line;
+            //env.abs_line = env.tbc[i]->line;
             //print_err(&env, LABEL_ERROR, "Unknown label");
+            internal_err("Label undefined, no error handling yet");
         } else {
             switch (env.tbc[i]->opts) {
                 case LO_16:
