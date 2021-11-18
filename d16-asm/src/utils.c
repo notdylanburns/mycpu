@@ -1,5 +1,6 @@
 #include "utils.h"
 
+#include <stdbool.h>
 #include <string.h>
 
 bool add_char(char **s, char c) {
