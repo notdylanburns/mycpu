@@ -9,8 +9,11 @@ BIN_DIR := $(ROOT_DIR)/bin
 SRCS := $(wildcard $(SRC_DIR)/*.S)
 BINS := $(patsubst $(SRC_DIR)/%.S, $(BIN_DIR)/%.bin, $(SRCS)) 
 
-all: $(BINS)
+all: $(BIN_DIR) $(BINS)
 $(BIN_DIR)/%.bin: $(SRC_DIR)/%.S
-	valgrind $(VALGRIND_FLAGS) $(ASM) $< $@ | grep "All heap blocks were freed -- no leaks are possible" >> /dev/null
+	valgrind $(VALGRIND_FLAGS) $(ASM) $< $@
+
+$(BIN_DIR):
+	mkdir -p $@
 
 .PHONY: all

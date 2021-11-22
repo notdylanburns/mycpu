@@ -184,7 +184,7 @@ struct Instruction *get_instruction(struct ASM *env, char **line, size_t linesiz
                         print_err(env, SYNTAX_ERROR, "Invalid address literal", STARTOF(i), ENDOF(i));
                         return NULL;
                     }
-                    if ((addr & 0x0000ffff) == addr) 
+                    if ((addr & 0xffff0000) == (env->address& 0xffff0000)) 
                         a[i - 1] = A16;
                     else
                         a[i - 1] = A32; 
@@ -200,7 +200,7 @@ struct Instruction *get_instruction(struct ASM *env, char **line, size_t linesiz
 
                 case V_LBL:
                     if (!get_label(env, line[i], &addr))
-                        if ((addr & 0x0000ffff) == addr) 
+                        if ((addr & 0xffff0000) == (env->address& 0xffff0000)) 
                             a[i - 1] = A16;
                         else
                             a[i - 1] = A32; 

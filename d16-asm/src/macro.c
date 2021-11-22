@@ -7,8 +7,10 @@
 #include "asmenv.h"
 #include "asmerror.h"
 #include "asminclude.h"
-#include "label.h"
 #include "asmstring.h"
+#include "conditional.h"
+#include "label.h"
+#include "symbol.h"
 #include "value.h"
 #include "utils.h"
 
@@ -181,6 +183,10 @@ static bool _macro_inc(struct ASM *env, size_t argc, char **argv) {
         return false;
     }
 
+    if (env->by->n >= 255) {
+        print_err(env, MACRO_ERROR, "Maximum include depth reached", STARTOF(0), ENDOF(1));
+    }
+
     char *fp;
 
     if (!strraw(argv[1], &fp)) {
@@ -188,7 +194,7 @@ static bool _macro_inc(struct ASM *env, size_t argc, char **argv) {
         return false;
     }
 
-    FILE *f = fopen(fp, "rb");
+    FILE *f = fopen(fp, "r");
     if (f == NULL) {
         print_err(env, INCLUDE_ERROR, "No such file", STARTOF(1), ENDOF(1));
         return false;
@@ -281,7 +287,7 @@ static bool _macro_embed(struct ASM *env, size_t argc, char **argv) {
         return false;
     }
 
-    FILE *f = fopen(fp, "rb");
+    FILE *f = fopen(fp, "r");
     if (f == NULL) {
         print_err(env, INCLUDE_ERROR, "No such file", STARTOF(1), ENDOF(1));
         return false;
@@ -304,11 +310,18 @@ static bool _macro_embed(struct ASM *env, size_t argc, char **argv) {
     uint16_t words[wordlen];
     bool step = false;
     uint8_t hi_byte = 0;
-    for (size_t i = 0; i < len; i++)
+    for (size_t i = 0; i < len; i++) {
         if (step)
-            words[i / 2] = (hi_byte << 8) | buf[i];
+            words[i / 2] = (hi_byte << 8) | (buf[i] & 0xff);
         else
             hi_byte = buf[i];
+        step = !step;
+    }
+
+    if (len & 1)
+        words[len / 2] = (hi_byte << 8) & 0xff00;
+    else
+        words[len / 2] = 0x0000;
 
     if (!add_words(env, words, wordlen)) {
         internal_err("malloc failed...");
@@ -318,23 +331,119 @@ static bool _macro_embed(struct ASM *env, size_t argc, char **argv) {
     return true;
 }
 
+static bool _macro_define(struct ASM *env, size_t argc, char **argv) {
+    if (argc < 2) {
+        print_err(env, MACRO_ERROR, "Too few arguments", STARTOF(0), ENDOF(argc - 1));
+        return false;
+    } else if (argc > 2) {
+        print_err(env, MACRO_ERROR, "Too many arguments", STARTOF(2), ENDOF(argc - 1));
+        return false;
+    }
+
+    if (!get_symbol(env, argv[1]))
+        if (!add_symbol(env, argv[1]))
+            return false;
+
+    return true;
+}
+
+static bool _macro_undef(struct ASM *env, size_t argc, char **argv) {
+    if (argc < 2) {
+        print_err(env, MACRO_ERROR, "Too few arguments", STARTOF(0), ENDOF(argc - 1));
+        return false;
+    } else if (argc > 2) {
+        print_err(env, MACRO_ERROR, "Too many arguments", STARTOF(2), ENDOF(argc - 1));
+        return false;
+    }
+
+    if (!get_symbol(env, argv[1]))
+        if (!remove_symbol(env, argv[1]))
+            return false;
+
+    return true;
+}
+
+static bool _macro_ifdef(struct ASM *env, size_t argc, char **argv) {
+    if (argc < 2) {
+        print_err(env, MACRO_ERROR, "Too few arguments", STARTOF(0), ENDOF(argc - 1));
+        return false;
+    } else if (argc > 2) {
+        print_err(env, MACRO_ERROR, "Too many arguments", STARTOF(2), ENDOF(argc - 1));
+        return false;
+    }
+
+    // if we're currently skipping, skip again. else evaluate the condition
+    struct Conditional *c = new_conditional((env->ifs != NULL && env->ifs->skip) ? true : !get_symbol(env, argv[1]));
+    if (c == NULL) {
+        internal_err("malloc failed...");
+        return false;
+    }
+
+    c->parent = env->ifs;
+    env->ifs = c;
+
+    return true;
+}
+
+static bool _macro_ifndef(struct ASM *env, size_t argc, char **argv) {
+    if (argc < 2) {
+        print_err(env, MACRO_ERROR, "Too few arguments", STARTOF(0), ENDOF(argc - 1));
+        return false;
+    } else if (argc > 2) {
+        print_err(env, MACRO_ERROR, "Too many arguments", STARTOF(2), ENDOF(argc - 1));
+        return false;
+    }
+
+    // if we're currently skipping, skip again. else evaluate the condition
+    struct Conditional *c = new_conditional((env->ifs != NULL && env->ifs->skip) ? true : get_symbol(env, argv[1]));
+    if (c == NULL) {
+        internal_err("malloc failed...");
+        return false;
+    }
+
+    c->parent = env->ifs;
+    env->ifs = c;
+
+    return true;
+}
+
+static bool _macro_endif(struct ASM *env, size_t argc, char **argv) {
+    if (argc < 1) {
+        print_err(env, MACRO_ERROR, "Too few arguments", STARTOF(0), ENDOF(argc - 1));
+        return false;
+    } else if (argc > 1) {
+        print_err(env, MACRO_ERROR, "Too many arguments", STARTOF(1), ENDOF(argc - 1));
+        return false;
+    }
+
+    env->ifs = destroy_conditional(env->ifs);
+
+    return true;
+}
+
 struct MACRO {
     char *name;
     bool (*action)(struct ASM *, size_t, char **);
+    bool can_skip;
 };
 
 static const struct MACRO *MACROS[] = {
-    &(struct MACRO){ "!org"         , &_macro_org       },
-    &(struct MACRO){ "!dw"          , &_macro_dw        },
-    &(struct MACRO){ "!word"        , &_macro_dw        },
-    &(struct MACRO){ "!ddw"         , &_macro_ddw       },
-    &(struct MACRO){ "!dword"       , &_macro_ddw       },
-    &(struct MACRO){ "!str"         , &_macro_wstr      },
-    &(struct MACRO){ "!wstr"        , &_macro_wstr      },
-    &(struct MACRO){ "!bstr"        , &_macro_bstr      },
-    &(struct MACRO){ "!inc"         , &_macro_inc       },
-    &(struct MACRO){ "!include"     , &_macro_inc       },
-    &(struct MACRO){ "!embed"       , &_macro_embed     },
+    &(struct MACRO){ "!org"         , &_macro_org       , true  },
+    &(struct MACRO){ "!dw"          , &_macro_dw        , true  },
+    &(struct MACRO){ "!word"        , &_macro_dw        , true  },
+    &(struct MACRO){ "!ddw"         , &_macro_ddw       , true  },
+    &(struct MACRO){ "!dword"       , &_macro_ddw       , true  },
+    &(struct MACRO){ "!str"         , &_macro_wstr      , true  },
+    &(struct MACRO){ "!wstr"        , &_macro_wstr      , true  },
+    &(struct MACRO){ "!bstr"        , &_macro_bstr      , true  },
+    &(struct MACRO){ "!inc"         , &_macro_inc       , true  },
+    &(struct MACRO){ "!include"     , &_macro_inc       , true  },
+    &(struct MACRO){ "!embed"       , &_macro_embed     , true  },
+    &(struct MACRO){ "!define"      , &_macro_define    , true  },
+    &(struct MACRO){ "!undef"       , &_macro_undef     , true  },
+    &(struct MACRO){ "!ifdef"       , &_macro_ifdef     , false },
+    &(struct MACRO){ "!ifndef"      , &_macro_ifndef    , false },
+    &(struct MACRO){ "!endif"       , &_macro_endif     , false },
     NULL,
 };
 
@@ -342,6 +451,7 @@ bool run_macro(char *macro, struct ASM *env) {
     char **argv = NULL;
     size_t argc = 0;
     char *arg = NULL;
+    char escape = false;
 
     for (char *c = macro; *c; c++) {
         switch (*c) {
@@ -356,25 +466,44 @@ bool run_macro(char *macro, struct ASM *env) {
             case '"':
                 if (!add_char(&arg, *c))
                     goto nomem;
-                c++;
-                while (*c != '"') {
-                    if (*c == '\0') {
-                        print_err(env, SYNTAX_ERROR, "Unterminated string literal", STARTOF(argc + 1), ENDOF(argc + 1));
-                        goto cleanup;
-                    } else {
-                        if (!add_char(&arg, *c))
-                            goto nomem;
-                    }
+
+                if (!escape) {
                     c++;
+                    while (*c != '"') {
+                        if (*c == '\0') {
+                            print_err(env, SYNTAX_ERROR, "Unterminated string literal", STARTOF(argc + 1), ENDOF(argc + 1));
+                            goto cleanup;
+                        } else {
+                            if (!add_char(&arg, *c))
+                                goto nomem;
+                        }
+                        c++;
+                    }
+                    if (!add_char(&arg, *c))
+                        goto nomem;
+
+                    size_t new_len, estart, elen;
+                    if (!resolve_escaped(arg, &new_len, &estart, &elen)) {
+                        print_err(env, SYNTAX_ERROR, "Invalid escape sequence", estart, estart + elen);
+                        goto cleanup;
+                    }
+
+                    char *tmp_arg = realloc(arg, new_len);
+                    if (tmp_arg == NULL)
+                        goto nomem;
+                    
+                    arg = tmp_arg;
+
                 }
-                if (!add_char(&arg, *c))
-                    goto nomem;
                 break;
-            
+
+            case '\'':
+                escape = true;
             default:
                 if (!add_char(&arg, *c))
                     goto nomem;
         }
+        escape = false;
     }
 
     if (arg != NULL) 
@@ -383,8 +512,9 @@ bool run_macro(char *macro, struct ASM *env) {
 
     for (const struct MACRO **m = MACROS; *m; m++)
         if (!strcmp(argv[0], (*m)->name)) {
-            if (!(*m)->action(env, argc, argv))
-                goto cleanup;
+            if (env->ifs == NULL || !(env->ifs->skip) || !((*m)->can_skip))
+                if (!(*m)->action(env, argc, argv))
+                    goto cleanup;
             
             if (argv != NULL) {
                 for (size_t i = 0; i < argc; i++)

@@ -6,6 +6,7 @@
 #include <stdbool.h>
 
 #include "asminclude.h"
+#include "conditional.h"
 
 enum LabelOpts {
     LO_16,
@@ -36,9 +37,12 @@ struct ASM {
     size_t num_placeholders;
     char **lines;
     size_t num_lines;
+    char **symbols;
+    size_t num_symbols;
     char *cur_line;
     size_t abs_line;
     struct IncludedBy *by;
+    struct Conditional *ifs; // for macros
 };
 
 extern bool add_words(struct ASM *env, uint16_t *words, size_t num);

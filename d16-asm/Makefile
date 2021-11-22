@@ -35,7 +35,7 @@ $(OBJ_DIR):
 	mkdir $@
 
 test: FORCE
-	make -C $(TST_DIR)
+	make -B -C $(TST_DIR)
 
 clean:
 	rm -rf $(OBJ_DIR)

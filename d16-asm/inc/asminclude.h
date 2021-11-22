@@ -13,6 +13,5 @@ struct IncludedBy {
 
 extern struct IncludedBy *new_include(char *filepath, size_t n, size_t num_lines);
 extern void destroy_include(struct IncludedBy *by);
-extern size_t get_lineno(struct IncludedBy *by);
 
 #endif

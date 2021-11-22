@@ -18,7 +18,6 @@ my_str:
 ; Interrupt Handlers
 
 irq0:
-
 irq1:
 irq2:
 irq3:
@@ -53,4 +52,4 @@ irq_vector_table:
     !dw irqC
     !dw irqD
     !dw irqE
-    !dw irqF
+    !dw irqF 

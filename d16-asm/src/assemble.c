@@ -6,6 +6,7 @@
 
 #include "asmerror.h"
 #include "asminclude.h"
+#include "conditional.h"
 #include "instruction.h"
 #include "label.h"
 #include "macro.h"
@@ -83,9 +84,12 @@ start_asm:
             goto nomem;
 
     arg = NULL;
-    if (argc > 0)
-        if (!asm_line(env, argv, argc))
-            goto cleanup;
+    
+    if (env->ifs == NULL || !(env->ifs->skip)) {
+        if (argc > 0)
+            if (!asm_line(env, argv, argc))
+                goto cleanup;
+    }
 
     for (size_t i = 0; i < argc; i++)
         free(argv[i]);
@@ -119,8 +123,10 @@ uint16_t *assemble(char *filename, const char *source, size_t *words) {
         .num_words=0, .words=NULL, 
         .num_labels=0, .labels=NULL,
         .num_placeholders=0, .tbc=NULL,
+        .num_symbols=0, .symbols=NULL,
         .lines=NULL, .cur_line=NULL,
         .by=by, .abs_line=0,
+        .ifs=NULL,
     };
 
     char *dup, *src, *cpy = strdup(source);
@@ -172,6 +178,10 @@ uint16_t *assemble(char *filename, const char *source, size_t *words) {
         }
     }
 
+    if (env.ifs != NULL) {
+        internal_err("Unterminated if, no handling yet");
+    }
+
     for (size_t i = 0; i < env.num_placeholders; i++) {
         uint32_t addr;
         if (!get_label(&env, env.tbc[i]->label, &addr)) {
@@ -207,6 +217,10 @@ uint16_t *assemble(char *filename, const char *source, size_t *words) {
     }
     free(env.labels);
 
+    for (size_t i = 0; i < env.num_symbols; i++)
+        free(env.symbols[i]);
+    free(env.symbols);
+
     for (size_t i = 0; i < env.num_placeholders; i++) {
         free(env.tbc[i]->label);
         free(env.tbc[i]);
@@ -232,6 +246,10 @@ cleanup:
         free(env.labels[i]);
     }
     free(env.labels);
+
+    for (size_t i = 0; i < env.num_symbols; i++)
+        free(env.symbols[i]);
+    free(env.symbols);
 
     for (size_t i = 0; i < env.num_placeholders; i++) {
         free(env.tbc[i]->label);

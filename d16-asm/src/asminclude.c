@@ -31,15 +31,3 @@ void destroy_include(struct IncludedBy *by) {
         by = next;
     }
 }
-
-size_t get_lineno(struct IncludedBy *by) {
-    struct IncludedBy *parent = 0;
-    size_t total = 0;
-    while (by != NULL) {
-        parent = by->parent;
-        total += by->line;
-        by = parent;
-    }
-
-    return total;
-}

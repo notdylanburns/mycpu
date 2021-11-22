@@ -1,3 +1,6 @@
+    !ifndef LIBRARY_INCLUDED
+    !define LIBRARY_INCLUDED
+
     !org $0000
 
     !dw $4865                   ; H e
@@ -10,8 +13,15 @@
 
     !ddw $64210000              ; d !
 
-redfine_me:
     !str "hello"
-    
-    !inc "/home/mk41/mycpu/d16-asm/test.S"
-    !bstr "/home/mk41/mycpu/d16-asm/test.d16 hello balls fart deez"
+
+    !define __SYMBOL
+    !ifndef __SYMBOL
+
+    !embed "/home/mk41/mycpu/d16-asm/test.S"
+
+    !endif
+
+    !bstr "\n\n\n"
+
+    !endif
