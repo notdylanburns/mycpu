@@ -456,6 +456,10 @@ bool run_macro(char *macro, struct ASM *env) {
     for (char *c = macro; *c; c++) {
         switch (*c) {
             case ' ':
+            case '\t':
+            case '\f':
+            case '\v':
+            case '\r':
                 if (arg != NULL)
                     if (!add_arg(arg, &argv, &argc))
                         goto nomem;
