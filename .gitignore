@@ -8,3 +8,4 @@ test.c
 test
 */tests/bin/*.bin
 vgcore.*
+out.bin
