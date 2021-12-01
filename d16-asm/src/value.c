@@ -6,10 +6,10 @@
 enum VAL_TYPE get_type(char *value) {
     switch (value[0]) {
         case '#':
-            if (('0' <= value[1] && '9' >= value[1]) || value[1] == '$' || value[1] == '\'')
-                return V_IMM;
-            else
-                return V_LLO;
+            return V_IMM;
+
+        case '&':
+            return V_LLO;
 
         case '@':
             return V_LHI;
@@ -21,7 +21,7 @@ enum VAL_TYPE get_type(char *value) {
             return V_IND;
         
         case 'b':   // byte string (2 chars per machine word)
-        case 'w':   // wide string (1 char per machine word, utf-16)
+        case 'w':   // wide string (1 char per machine word, utf-16?)
             if (value[1] == '"')
                 return V_STR;
             else

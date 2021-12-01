@@ -14,7 +14,10 @@ def main(file: str, out: str):
                         base = int(l[0].replace("R", f"{r:x}"), 16) << 4
                         i: int = 0
                         for w in l[5:]:
-                            words[base + i] = int(w.replace("R", f"{r:x}"), 16)
+                            try:
+                                words[base + i] = int(w.replace("R", f"{r:x}"), 16)
+                            except ValueError:
+                                print(f"Error parsing microcode for {l[0]}")
                             i += 1
 
                 elif "X" in l[0] and "Y" in l[0]:
@@ -23,7 +26,10 @@ def main(file: str, out: str):
                             base = int(l[0].replace("X", f"{x:x}").replace("Y", f"{y:x}"), 16) << 4
                             i: int = 0
                             for w in l[5:]:
-                                words[base + i] = int(w.replace("X", f"{x:x}").replace("Y", f"{y:x}"), 16)
+                                try:
+                                    words[base + i] = int(w.replace("X", f"{x:x}").replace("Y", f"{y:x}"), 16)
+                                except ValueError:
+                                    print(f"Error parsing microcode for {l[0]}")
                                 i += 1
 
                 else:

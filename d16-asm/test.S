@@ -1,20 +1,22 @@
 start:
-    mov %f #$1234           ; stores 0x1234 in %f
-    mov %0 #1234            ; stores 1234 in %0
-    mov $9a7d #'1101        ; stores 0b1101 at memory location 0x9a7d
-    mov $ffff0003 #10       ; stores 10 at memory location 0xffff0003
-    mov data %f
+    jmp init
 
-data:
-    !dw 0
-    !ddw $deadbeef
+post_init:
+    jsr my_routine
 
-redfine_me:
-    !ddw irq_vector_table
+loop:
+    hlt
 
-my_str:
-    !str "deez nutz"
+my_routine:
+    phf
+    mov %0 #$ffff
+    mov %1 %0
+    ppf
 
+    ret
+
+init:
+    jmp post_init
 ; Interrupt Handlers
 
 irq0:

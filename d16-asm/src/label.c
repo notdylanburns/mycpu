@@ -18,7 +18,7 @@ bool add_label(struct ASM *env, char *l) {
     strcpy(label->label, l);
     label->address = env->address;
 
-    struct Label **tmp = realloc(env->labels, env->num_labels * sizeof(struct Label *));
+    struct Label **tmp = realloc(env->labels, (env->num_labels + 1) * sizeof(struct Label *));
     if (tmp == NULL) {
         free(label);
         return false;
@@ -51,7 +51,7 @@ bool add_label_ph(struct ASM *env, char *l, size_t line, size_t word, enum Label
     strcpy(lph->label, l);
     lph->address = env->address;
 
-    struct LabelPlaceholder **tmp = realloc(env->tbc, env->num_placeholders * sizeof(struct LabelPlaceholder *));
+    struct LabelPlaceholder **tmp = realloc(env->tbc, (env->num_placeholders + 1) * sizeof(struct LabelPlaceholder *));
     if (tmp == NULL) {
         free(lph);
         return false;

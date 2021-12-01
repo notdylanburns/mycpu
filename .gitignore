@@ -2,7 +2,7 @@
 obj
 d16asm
 test.bin
-valgrind-out.txt
+valgrind-out.txt*
 todo
 test.c
 test
