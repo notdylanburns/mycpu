@@ -2,10 +2,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "asmerror.h"
-#include "asminclude.h"
-#include "assemble.h"
-#include "endianness.h"
+#include "inc/asmerror.h"
+#include "inc/asminclude.h"
+#include "inc/assemble.h"
+#include "inc/endianness.h"
 
 int main(int argc, char **argv) {
     if (argc < 2) {
