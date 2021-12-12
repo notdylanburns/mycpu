@@ -430,18 +430,18 @@ static bool _macro_array(struct ASM *env, size_t argc, char **argv) {
         return false;
     }
 
-    size_t n, data;
-    if (!value16(argv[1], n)) {
+    uint16_t n, data;
+    if (!value16(argv[1], &n)) {
         print_err(env, MACRO_ERROR, "Expected integer literal", STARTOF(1), ENDOF(1));
         return false;
     }
 
-    if (!value16(argv[2], data)) {
+    if (!value16(argv[2], &data)) {
         print_err(env, MACRO_ERROR, "Expected integer literal", STARTOF(2), ENDOF(2));
         return false;
     }
 
-    for (size_t i = 0; i < n; i++) {
+    for (uint16_t i = 0; i < n; i++) {
         if (!add_words(env, &data, 1)) {
             internal_err("malloc failed...");
             return false;
