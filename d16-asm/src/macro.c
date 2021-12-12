@@ -421,6 +421,36 @@ static bool _macro_endif(struct ASM *env, size_t argc, char **argv) {
     return true;
 }
 
+static bool _macro_array(struct ASM *env, size_t argc, char **argv) {
+    if (argc < 2) {
+        print_err(env, MACRO_ERROR, "Too few arguments", STARTOF(0), ENDOF(argc - 1));
+        return false;
+    } else if (argc > 2) {
+        print_err(env, MACRO_ERROR, "Too many arguments", STARTOF(2), ENDOF(argc - 1));
+        return false;
+    }
+
+    size_t n, data;
+    if (!value16(argv[1], n)) {
+        print_err(env, MACRO_ERROR, "Expected integer literal", STARTOF(1), ENDOF(1));
+        return false;
+    }
+
+    if (!value16(argv[2], data)) {
+        print_err(env, MACRO_ERROR, "Expected integer literal", STARTOF(2), ENDOF(2));
+        return false;
+    }
+
+    for (size_t i = 0; i < n; i++) {
+        if (!add_words(env, &data, 1)) {
+            internal_err("malloc failed...");
+            return false;
+        }
+    }
+
+    return true;
+}
+
 struct MACRO {
     char *name;
     bool (*action)(struct ASM *, size_t, char **);
@@ -444,6 +474,8 @@ static const struct MACRO *MACROS[] = {
     &(struct MACRO){ "!ifdef"       , &_macro_ifdef     , false },
     &(struct MACRO){ "!ifndef"      , &_macro_ifndef    , false },
     &(struct MACRO){ "!endif"       , &_macro_endif     , false },
+    &(struct MACRO){ "!arr"         , &_macro_array     , false },
+    &(struct MACRO){ "!array"       , &_macro_array     , false },
     NULL,
 };
 

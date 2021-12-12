@@ -3,7 +3,6 @@
 #include <string.h>
 
 #include "inc/asmerror.h"
-#include "inc/asminclude.h"
 #include "inc/assemble.h"
 #include "inc/endianness.h"
 
@@ -34,6 +33,9 @@ int main(int argc, char **argv) {
         fatal_err("Error while reading '%s'", argv[1]);
         return 1;
     }
+
+    int *k = NULL;
+    *k = 5;
 
     fclose(src);
 
