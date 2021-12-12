@@ -62,7 +62,7 @@ void print_err(struct ASM *env, enum ERROR_TYPE t, char *msg, size_t estart, siz
             fprintf(stderr, "^");
     }
     
-    fprintf(stderr, "\n\033[1;37m%s: %s\033[0;37m\n", STR_ERROR[t], msg);
+    fprintf(stderr, "\n\033[1;37m%s: %s\033[1;31m\n", STR_ERROR[t], msg);
 }
 
 void internal_err(char *msg) {

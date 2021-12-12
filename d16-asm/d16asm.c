@@ -34,9 +34,6 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    int *k = NULL;
-    *k = 5;
-
     fclose(src);
 
     size_t wc = 0;
