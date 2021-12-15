@@ -84,7 +84,7 @@ find_close_sq.loop:
     cmp *1 #$5B
     jsz find_close_sq.inc
 
-    cmp *1 #$5D
+    cmcmpp *1 #$5D
     jnz find_close_sq.next
 
     cmp sq_counter #0
@@ -151,5 +151,5 @@ end_cells:
 
 sq_counter:
     !dw 0               ; pre stack word
-stack: !array 1024 0 
+stack: !array 1024 0
 end_stack:

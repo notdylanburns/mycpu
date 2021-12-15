@@ -10,3 +10,4 @@ test
 vgcore.*
 out.bin
 .idea
+libd16.so

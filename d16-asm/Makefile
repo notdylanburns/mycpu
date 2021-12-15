@@ -13,7 +13,7 @@ MICROCODE_FILE := $(dir $(ROOT_DIR))Microcode.csv
 
 SRC_EXCLUDE :=
 
-CFLAGS := -Wall -I$(INC_DIR) -ggdb3
+CFLAGS := -Wall -I$(INC_DIR) #-ggdb3
 LDFLAGS := 
 
 SRCS := $(SRC_DIR)/matrix.c $(filter-out $(SRC_EXCLUDE), $(wildcard $(SRC_DIR)/*.c))

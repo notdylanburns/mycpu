@@ -1,4 +1,10 @@
 start:
+    mov %0 #10
+    adc %0 #12
+
+    mov %1 %0
+    sbc %1 #10
+
     jmp init
 
 post_init:
@@ -17,7 +23,6 @@ my_routine:
 
 init:
     jmp post_init
-
 ; Interrupt Handlers
 
 irq0:
