@@ -39,6 +39,7 @@ plus:
     inc *0              ; increment the value at *0
     jmp next
 
+
 in:
     ; TODO implement
     jmp next
@@ -84,7 +85,9 @@ find_close_sq.loop:
     cmp *1 #$5B
     jsz find_close_sq.inc
 
-    cmcmpp *1 #$5D
+    
+
+    cmp *1 #$5D
     jnz find_close_sq.next
 
     cmp sq_counter #0

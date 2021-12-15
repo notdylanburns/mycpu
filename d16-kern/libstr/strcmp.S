@@ -4,10 +4,10 @@
 strcmp_w: ; compares strings pointed to by %0 and %1, and sets the Z flag if they are equal
     
 strcmp_w.loop:
-    tst *0
+    cmp *0 #0
     jsz strcmp.end
 
-    tst *1
+    cmp *1 #0
     jsz strcmp.end
 
     sbc *0 *1
@@ -19,6 +19,6 @@ strcmp_w.loop:
     jmp strcmp.loop
 
 strcmp_w.end:
-    rts
+    ret
 
     !endif
